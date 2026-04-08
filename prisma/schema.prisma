@@ -1,0 +1,319 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String     @id @default(uuid())
+  nome          String
+  cognome       String
+  email         String     @unique
+  passwordHash  String
+  ruolo         Ruolo      @default(TECNICO)
+  attivo        Boolean    @default(true)
+  ultimoAccesso DateTime?
+  createdAt     DateTime   @default(now())
+  impianti      Plant[]    @relation("CreatedBy")
+  documenti     Document[]
+}
+
+model Anagrafica {
+  id             String              @id @default(uuid())
+  ragioneSociale String
+  partitaIva     String?             @unique
+  codiceFiscale  String?
+  indirizzo      String?
+  citta          String?
+  provincia      String?
+  cap            String?
+  note           String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  impiantiProprietario Plant[]             @relation("Proprietario")
+  impiantiGestore      Plant[]             @relation("Gestore")
+  contatti             AnagraficaContact[]
+}
+
+model AnagraficaContact {
+  id           String     @id @default(uuid())
+  anagraficaId String
+  anagrafica   Anagrafica @relation(fields: [anagraficaId], references: [id], onDelete: Cascade)
+  nome         String
+  ruolo        String?
+  telefono     String?
+  email        String?
+  note         String?
+}
+
+model Compagnia {
+  id       String  @id @default(uuid())
+  nome     String  @unique
+  logoUrl  String?
+  note     String?
+  impianti Plant[]
+}
+
+model Plant {
+  id                      String               @id @default(uuid())
+  codice                  String?              @unique
+  alias                   String?
+  indirizzo               String
+  citta                   String
+  provincia               String               @db.Char(2)
+  cap                     String?
+  latitudine              Float?
+  longitudine             Float?
+
+  proprietarioId          String?
+  proprietario            Anagrafica?          @relation("Proprietario", fields: [proprietarioId], references: [id])
+  gestoreId               String?
+  gestore                 Anagrafica?          @relation("Gestore", fields: [gestoreId], references: [id])
+
+  compagniaId             String?
+  compagnia               Compagnia?           @relation(fields: [compagniaId], references: [id])
+  codiceImpiantoCompagnia String?
+  ispettoreZona           String?
+
+  clienteManutenzione     ClienteManutenzione?
+
+  tipoImpianto            TipoImpianto         @default(STRADALE)
+  stato                   StatoImpianto        @default(ATTIVO)
+  numeroAutorizzazione    String?
+  dataApertura            DateTime?
+  noteGenerali            String?
+
+  createdById             String
+  createdBy               User                 @relation("CreatedBy", fields: [createdById], references: [id])
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+
+  apparecchiature         Equipment[]
+  documenti               Document[]
+  networkDevices          NetworkDevice[]
+}
+
+model Equipment {
+  id                  String               @id @default(uuid())
+  impiantoId          String
+  impianto            Plant                @relation(fields: [impiantoId], references: [id], onDelete: Cascade)
+  tipo                TipoApparecchio
+  tipoErogatore       TipoErogatore?
+  marca               String?
+  modello             String?
+  matricola           String?
+  annoInstallazione   Int?
+  stato               StatoApparecchio     @default(FUNZIONANTE)
+  posizione           String?
+  modalitaConnessione ModalitaConnessione?
+  note                String?
+
+  tipoCarburante      TipoCarburante?
+  capacitaLitri       Float?
+
+  pistole             EquipmentProduct[]
+  terminaleBank       BankingTerminal?
+  terminalePetrolio   PetroleumTerminal?
+  schedaMacchina      SchedaMacchina?
+
+  documenti           Document[]
+  networkDevices      NetworkDevice[]
+}
+
+model EquipmentProduct {
+  id             String         @id @default(uuid())
+  equipmentId    String
+  equipment      Equipment      @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  lato           String
+  numeroPistola  Int
+  tipoCarburante TipoCarburante
+
+  @@unique([equipmentId, lato, numeroPistola])
+}
+
+model BankingTerminal {
+  id              String           @id @default(uuid())
+  equipmentId     String           @unique
+  equipment       Equipment        @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  codiceTerminale String?          @unique
+  bancaCircuito   String?
+  tipoConnessione String?
+  framingMessaggi FramingMessaggi?
+  indirizzoIp     String?
+  porta           Int?
+}
+
+model PetroleumTerminal {
+  id                      String    @id @default(uuid())
+  equipmentId             String    @unique
+  equipment               Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  codiceTerminale         String?   @unique
+  protocolloComunicazione String?
+  indirizzoIp             String?
+  porta                   Int?
+}
+
+model SchedaMacchina {
+  id                 String    @id @default(uuid())
+  equipmentId        String    @unique
+  equipment          Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  indirizzoIpPc      String?
+  usernameSistema    String?
+  passwordSistema    String?
+  passwordPumapro    String?
+  passwordAdmin      String?
+  tipoAccessoRemoto  String?
+  portaAccessoRemoto Int?
+
+  subnetMask         String?
+  gateway            String?
+  dnsPrimario        String?
+  dnsSecondario      String?
+  tipoRete           String?
+
+  versioneSoftware   String?
+  numeroLicenza      String?
+  scadenzaLicenza    DateTime?
+
+  rotte              GestionaleRoute[]
+}
+
+model GestionaleRoute {
+  id               String         @id @default(uuid())
+  schedaMacchinaId String
+  schedaMacchina   SchedaMacchina @relation(fields: [schedaMacchinaId], references: [id], onDelete: Cascade)
+  reteDestinazione String
+  gateway          String
+  interfaccia      String?
+  descrizione      String?
+}
+
+model NetworkDevice {
+  id              String          @id @default(uuid())
+  impiantoId      String
+  impianto        Plant           @relation(fields: [impiantoId], references: [id], onDelete: Cascade)
+  equipmentId     String?
+  equipment       Equipment?      @relation(fields: [equipmentId], references: [id])
+  etichetta       String
+  tipoDispositivo TipoDispositivo
+  matricola       String?
+  indirizzoIp     String
+  macAddress      String?
+  subnetMask      String?
+  gateway         String?
+  note            String?
+}
+
+model Document {
+  id           String        @id @default(uuid())
+  impiantoId   String
+  impianto     Plant         @relation(fields: [impiantoId], references: [id], onDelete: Cascade)
+  equipmentId  String?
+  equipment    Equipment?    @relation(fields: [equipmentId], references: [id])
+  tipo         TipoDocumento
+  nomeFile     String
+  urlStorage   String
+  dimensioneKb Int
+  descrizione  String?
+  caricatoDaId String
+  caricatoDa   User          @relation(fields: [caricatoDaId], references: [id])
+  createdAt    DateTime      @default(now())
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Ruolo {
+  ADMIN
+  TECNICO
+  VIEWER
+}
+
+enum ClienteManutenzione {
+  PROPRIETARIO
+  GESTORE
+}
+
+enum TipoImpianto {
+  STRADALE
+  AUTOSTRADALE
+  PRIVATO
+  INDUSTRIALE
+  NAUTICO
+  AEROPORTUALE
+}
+
+enum StatoImpianto {
+  ATTIVO
+  INATTIVO
+  DISMESSO
+}
+
+enum TipoApparecchio {
+  EROGATORE
+  SERBATOIO
+  COLONNINA_PAGAMENTO
+  GESTIONALE
+  CENTRALINA_LIVELLO
+  POMPA
+  ALTRO
+}
+
+enum TipoErogatore {
+  MONOPRODOTTO
+  MULTIPRODOTTO
+  SELF_SERVICE
+  AUTOMATICO
+}
+
+enum ModalitaConnessione {
+  RETE_IP
+  SERIALE_GESTIONALE
+  STANDALONE
+}
+
+enum TipoCarburante {
+  BENZINA
+  DIESEL
+  GPL
+  METANO
+  ADBLUE
+  ELETTRICO
+  ALTRO
+}
+
+enum StatoApparecchio {
+  FUNZIONANTE
+  GUASTO
+  IN_MANUTENZIONE
+  DISMESSO
+}
+
+enum TipoDocumento {
+  FOTO
+  CERTIFICATO
+  MANUALE
+  COLLAUDO
+  PERMESSO
+  ALTRO
+}
+
+enum FramingMessaggi {
+  BT
+  TESTATA_IP
+}
+
+enum TipoDispositivo {
+  PC
+  POS
+  ROUTER
+  SWITCH
+  COLONNINA
+  EROGATORE
+  STAMPANTE
+  TELECAMERA
+  ALTRO
+}
