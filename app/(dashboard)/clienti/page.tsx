@@ -4,33 +4,61 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { Button } from "@/components/ui/button"
 
-export default async function ClientiPage() {
+interface SearchParams { q?: string; page?: string }
+
+export default async function ClientiPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await auth()
   const userRole = (session?.user as { ruolo?: string })?.ruolo
   const canWrite = userRole === "ADMIN" || userRole === "TECNICO"
+
+  const params = await searchParams
+  const q = params.q ?? ""
+  const page = Math.max(1, parseInt(params.page ?? "1"))
+  const perPage = 25
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: any = q
+    ? { ragioneSociale: { contains: q, mode: "insensitive" } }
+    : {}
 
   let clienti: Array<{
     id: string; ragioneSociale: string; partitaIva: string | null
     _count: { impiantiProprietario: number; impiantiGestore: number }
     contatti: Array<{ id: string; nome: string; telefono: string | null }>
   }> = []
+  let total = 0
 
   try {
-    clienti = await prisma.anagrafica.findMany({
-      orderBy: { ragioneSociale: "asc" },
-      include: {
-        _count: { select: { impiantiProprietario: true, impiantiGestore: true } },
-        contatti: { take: 1 },
-      },
-    })
+    ;[clienti, total] = await Promise.all([
+      prisma.anagrafica.findMany({
+        where,
+        orderBy: { ragioneSociale: "asc" },
+        skip: (page - 1) * perPage,
+        take: perPage,
+        include: {
+          _count: { select: { impiantiProprietario: true, impiantiGestore: true } },
+          contatti: { take: 1 },
+        },
+      }),
+      prisma.anagrafica.count({ where }),
+    ])
   } catch { /* DB not ready */ }
+
+  const totalPages = Math.max(1, Math.ceil(total / perPage))
+
+  const buildPageUrl = (p: number) => {
+    const sp = new URLSearchParams()
+    if (q) sp.set("q", q)
+    sp.set("page", String(p))
+    return `/clienti?${sp.toString()}`
+  }
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#0f4c75]">Clienti</h1>
-          <p className="text-sm text-muted-foreground mt-1">{clienti.length} clienti registrati</p>
+          <p className="text-sm text-muted-foreground mt-1">{total} clienti registrati</p>
         </div>
         {canWrite && (
           <Button asChild>
@@ -38,6 +66,18 @@ export default async function ClientiPage() {
           </Button>
         )}
       </div>
+
+      {/* Search */}
+      <form method="GET" className="flex gap-2">
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="Cerca per ragione sociale..."
+          className="flex h-9 w-full max-w-xs rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+        />
+        <Button type="submit" variant="outline" size="sm">Cerca</Button>
+        {q && <Button type="button" variant="ghost" size="sm" asChild><Link href="/clienti">Annulla</Link></Button>}
+      </form>
 
       <div className="bg-white border border-border rounded-lg overflow-hidden">
         <table className="w-full text-sm">
@@ -55,10 +95,6 @@ export default async function ClientiPage() {
             ) : clienti.map((c) => {
               const isProprietario = c._count.impiantiProprietario > 0
               const isGestore = c._count.impiantiGestore > 0
-              const totalImpianti = new Set([
-                ...Array(c._count.impiantiProprietario).fill("p"),
-                ...Array(c._count.impiantiGestore).fill("g"),
-              ]).size
               const ruoloBadge = isProprietario && isGestore
                 ? "Prop. e Gestore"
                 : isProprietario ? "Proprietario"
@@ -96,6 +132,16 @@ export default async function ClientiPage() {
             })}
           </tbody>
         </table>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/20">
+            <p className="text-sm text-muted-foreground">Pagina {page} di {totalPages} · {total} risultati</p>
+            <div className="flex gap-2">
+              {page > 1 && <Button variant="outline" size="sm" asChild><Link href={buildPageUrl(page - 1)}>Precedente</Link></Button>}
+              {page < totalPages && <Button variant="outline" size="sm" asChild><Link href={buildPageUrl(page + 1)}>Successiva</Link></Button>}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -94,6 +94,16 @@ model Plant {
   apparecchiature         Equipment[]
   documenti               Document[]
   networkDevices          NetworkDevice[]
+
+  @@index([stato])
+  @@index([tipoImpianto])
+  @@index([compagniaId])
+  @@index([proprietarioId])
+  @@index([gestoreId])
+  @@index([createdById])
+  @@index([updatedAt])
+  @@index([citta])
+  @@index([provincia])
 }
 
 model Equipment {
@@ -121,6 +131,9 @@ model Equipment {
 
   documenti           Document[]
   networkDevices      NetworkDevice[]
+
+  @@index([impiantoId])
+  @@index([tipo])
 }
 
 model EquipmentProduct {
@@ -206,6 +219,8 @@ model NetworkDevice {
   subnetMask      String?
   gateway         String?
   note            String?
+
+  @@index([impiantoId])
 }
 
 model Document {
@@ -222,6 +237,9 @@ model Document {
   caricatoDaId String
   caricatoDa   User          @relation(fields: [caricatoDaId], references: [id])
   createdAt    DateTime      @default(now())
+
+  @@index([impiantoId])
+  @@index([tipo])
 }
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
