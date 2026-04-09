@@ -15,12 +15,14 @@ export async function GET(
       include: {
         contatti: true,
         impiantiProprietario: {
-          include: { compagnia: true },
+          include: { compagnia: { select: { id: true, nome: true } } },
           orderBy: { citta: "asc" },
+          take: 200,
         },
         impiantiGestore: {
-          include: { compagnia: true },
+          include: { compagnia: { select: { id: true, nome: true } } },
           orderBy: { citta: "asc" },
+          take: 200,
         },
       },
     });

@@ -38,8 +38,8 @@ export default async function PlantDetailPage({ params }: { params: Promise<{ id
             schedaMacchina: { include: { rotte: true } },
           },
         },
-        networkDevices: true,
-        documenti: { orderBy: { createdAt: "desc" } },
+        networkDevices: { take: 100 },
+        documenti: { orderBy: { createdAt: "desc" }, take: 100 },
       },
     })
   } catch {

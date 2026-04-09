@@ -21,8 +21,16 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
       where: { id },
       include: {
         contatti: true,
-        impiantiProprietario: { include: { compagnia: true } },
-        impiantiGestore: { include: { compagnia: true } },
+        impiantiProprietario: {
+          include: { compagnia: { select: { nome: true } } },
+          orderBy: { citta: "asc" as const },
+          take: 200,
+        },
+        impiantiGestore: {
+          include: { compagnia: { select: { nome: true } } },
+          orderBy: { citta: "asc" as const },
+          take: 200,
+        },
       },
     })
   } catch { return <div className="text-center py-20 text-muted-foreground">Errore nel caricamento.</div> }
