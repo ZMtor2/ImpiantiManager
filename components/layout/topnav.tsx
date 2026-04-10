@@ -22,6 +22,8 @@ function roleLabel(role?: string): string {
   switch (role) {
     case "ADMIN":
       return "Amministratore"
+    case "TECNICO":
+      return "Tecnico"
     case "OPERATORE":
       return "Operatore"
     case "VIEWER":
@@ -79,7 +81,10 @@ export function TopNav({ userName, userRole, onMenuClick }: TopNavProps) {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={async () => {
+              await signOut({ redirect: false });
+              window.location.href = "/login";
+            }}
             className="text-[var(--destructive)] focus:text-[var(--destructive)]"
           >
             <LogOut className="w-4 h-4 mr-2" />
