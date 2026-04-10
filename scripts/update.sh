@@ -108,12 +108,17 @@ ok "Build completata."
 
 # ── 7. Restart applicazione ──────────────────────────────────────────────────
 log "Restart applicazione..."
-if command -v pm2 &>/dev/null && pm2 list | grep -q "impianti"; then
-  pm2 restart impianti
-  ok "PM2: impianti riavviato."
+if command -v pm2 &>/dev/null; then
+  if pm2 list | grep -q "impianti"; then
+    pm2 restart impianti
+    ok "PM2: impianti riavviato."
+  else
+    pm2 start npm --name "impianti" -- start
+    pm2 save
+    ok "PM2: impianti avviato."
+  fi
 else
-  warn "PM2 non trovato o processo 'impianti' non attivo."
-  warn "Avvia manualmente con: pm2 start npm --name impianti -- start"
+  warn "PM2 non trovato. Avvia manualmente con: pm2 start npm --name impianti -- start"
 fi
 
 # ── Riepilogo ─────────────────────────────────────────────────────────────────
