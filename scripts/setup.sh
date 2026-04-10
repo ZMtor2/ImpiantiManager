@@ -16,17 +16,17 @@ log "Verifica sistema..."
 [[ "$(uname -s)" == "Linux" ]] || fail "Questo script richiede Ubuntu/Debian Linux."
 ok "Sistema Linux rilevato."
 
-# ── 2. Node.js 20+ ───────────────────────────────────────────────────────────
+# ── 2. Node.js 22+ (richiesto da Prisma 7) ───────────────────────────────────
 log "Verifica Node.js..."
 NODE_OK=false
 if command -v node &>/dev/null; then
   NODE_VER=$(node -e "console.log(parseInt(process.versions.node))")
-  [[ "$NODE_VER" -ge 20 ]] && NODE_OK=true
+  [[ "$NODE_VER" -ge 22 ]] && NODE_OK=true
 fi
 
 if [[ "$NODE_OK" == "false" ]]; then
-  log "Installazione Node.js 20..."
-  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+  log "Installazione Node.js 22..."
+  curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
   sudo apt-get install -y nodejs
   ok "Node.js $(node -v) installato."
 else
@@ -102,8 +102,8 @@ read -rp "  Indirizzo del server (IP o dominio, invio = localhost): " SERVER_ADD
 SERVER_ADDR="${SERVER_ADDR:-localhost}"
 [[ "$SERVER_ADDR" != http* ]] && SERVER_ADDR="http://${SERVER_ADDR}"
 PORT="${PORT:-3000}"
-sed -i "s|NEXTAUTH_URL=.*|NEXTAUTH_URL=\"${SERVER_ADDR}:${PORT}\"|" .env
-ok "NEXTAUTH_URL → ${SERVER_ADDR}:${PORT}"
+sed -i "s|AUTH_URL=.*|AUTH_URL=\"${SERVER_ADDR}:${PORT}\"|" .env
+ok "AUTH_URL → ${SERVER_ADDR}:${PORT}"
 
 # Offri di aprire .env
 echo ""
@@ -137,13 +137,16 @@ npx prisma generate
 ok "Prisma client generato."
 
 # ── 8. Schema DB + seed ──────────────────────────────────────────────────────
-log "Migrazione schema database..."
-if npx prisma migrate deploy 2>/dev/null; then
+log "Applicazione schema database..."
+# Se esiste una cartella migrations con file SQL usa migrate deploy,
+# altrimenti crea lo schema direttamente con db push
+MIGRATIONS_DIR="prisma/migrations"
+if [[ -d "$MIGRATIONS_DIR" ]] && ls "${MIGRATIONS_DIR}"/*/migration.sql &>/dev/null; then
+  npx prisma migrate deploy
   ok "Migration applicate."
 else
-  warn "Nessuna migration trovata, uso db:push..."
-  npm run db:push
-  ok "Schema applicato con db:push."
+  npx prisma db push
+  ok "Schema applicato con db push."
 fi
 
 log "Seed dati iniziali..."

@@ -90,7 +90,7 @@ export function UtentiClient({ utenti: initial, currentUserId }: UtentiClientPro
         <Button onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" />Crea utente</Button>
       </div>
 
-      <div className="bg-white border border-border rounded-lg overflow-hidden">
+      <div className="bg-[var(--card)] border border-border rounded-lg overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>

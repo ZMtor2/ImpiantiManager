@@ -12,7 +12,7 @@ export default async function ModificaClientePage({ params }: { params: Promise<
   if (!cliente) notFound()
   return (
     <div className="max-w-2xl mx-auto space-y-5">
-      <h1 className="text-2xl font-bold text-[#0f4c75]">Modifica Cliente</h1>
+      <h1 className="text-2xl font-bold text-[var(--primary)]">Modifica Cliente</h1>
       <ClienteForm initialData={{
         id: cliente.id,
         ragioneSociale: cliente.ragioneSociale,

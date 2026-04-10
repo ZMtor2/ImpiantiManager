@@ -16,7 +16,7 @@ export default async function UtentiPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-[#0f4c75]">Gestione Utenti</h1>
+        <h1 className="text-2xl font-bold text-[var(--primary)]">Gestione Utenti</h1>
         <p className="text-sm text-muted-foreground mt-1">Invita e gestisci gli utenti del sistema.</p>
       </div>
       <UtentiClient utenti={utenti} currentUserId={session!.user!.id as string} />

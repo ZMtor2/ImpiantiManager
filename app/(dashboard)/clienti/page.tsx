@@ -57,7 +57,7 @@ export default async function ClientiPage({ searchParams }: { searchParams: Prom
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0f4c75]">Clienti</h1>
+          <h1 className="text-2xl font-bold text-[var(--primary)]">Clienti</h1>
           <p className="text-sm text-muted-foreground mt-1">{total} clienti registrati</p>
         </div>
         {canWrite && (
@@ -79,7 +79,7 @@ export default async function ClientiPage({ searchParams }: { searchParams: Prom
         {q && <Button type="button" variant="ghost" size="sm" asChild><Link href="/clienti">Annulla</Link></Button>}
       </form>
 
-      <div className="bg-white border border-border rounded-lg overflow-hidden">
+      <div className="bg-[var(--card)] border border-border rounded-lg overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
@@ -103,7 +103,7 @@ export default async function ClientiPage({ searchParams }: { searchParams: Prom
                 <tr key={c.id} className="hover:bg-muted/30 transition-colors group cursor-pointer">
                   <td className="px-4 py-3">
                     <Link href={`/clienti/${c.id}`} className="block">
-                      <p className="font-medium group-hover:text-[#0f4c75]">{c.ragioneSociale}</p>
+                      <p className="font-medium group-hover:text-[var(--primary)]">{c.ragioneSociale}</p>
                       <p className="text-xs text-muted-foreground">{ruoloBadge}</p>
                     </Link>
                   </td>

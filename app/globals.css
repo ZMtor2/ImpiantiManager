@@ -1,26 +1,36 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary: #0f4c75;
+  /* Backgrounds */
+  --background: #f8fafc;        /* slate-50 — slight tint reduces eye strain */
+  --foreground: #0f172a;        /* slate-950 */
+
+  /* Brand */
+  --primary: #2563eb;           /* blue-600 — clean, modern */
   --primary-foreground: #ffffff;
-  --accent: #f97316;
+  --accent: #2563eb;
   --accent-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+
+  /* Surfaces */
   --card: #ffffff;
-  --card-foreground: #171717;
-  --border: #e2e8f0;
+  --card-foreground: #0f172a;
+  --secondary: #f1f5f9;         /* slate-100 */
+  --secondary-foreground: #475569; /* slate-600 */
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;  /* slate-500 */
+
+  /* Chrome */
+  --border: #e2e8f0;            /* slate-200 */
   --input: #e2e8f0;
-  --ring: #0f4c75;
-  --destructive: #ef4444;
+  --ring: #93c5fd;              /* blue-300 — soft focus ring */
+
+  /* Semantic */
+  --destructive: #dc2626;       /* red-600 */
   --destructive-foreground: #ffffff;
-  --success: #22c55e;
-  --warning: #eab308;
-  --radius: 0.5rem;
+  --success: #16a34a;           /* green-600 */
+  --warning: #d97706;           /* amber-600 */
+
+  --radius: 0.625rem;           /* 10px — modern rounded */
 }
 
 @theme inline {
@@ -47,21 +57,23 @@
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
+  --radius-lg: calc(var(--radius) + 4px);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #111827;
-    --card-foreground: #ededed;
-    --border: #1e293b;
-    --input: #1e293b;
+    --background: #0f172a;       /* slate-950 */
+    --foreground: #e2e8f0;       /* slate-200 */
+    --card: #1e293b;             /* slate-800 */
+    --card-foreground: #e2e8f0;
+    --border: #334155;           /* slate-700 */
+    --input: #334155;
     --muted: #1e293b;
-    --muted-foreground: #94a3b8;
+    --muted-foreground: #94a3b8; /* slate-400 */
     --secondary: #1e293b;
-    --secondary-foreground: #f1f5f9;
+    --secondary-foreground: #cbd5e1; /* slate-300 */
+    --primary: #3b82f6;          /* blue-500 — slightly lighter on dark bg */
+    --ring: #3b82f6;
   }
 }
 

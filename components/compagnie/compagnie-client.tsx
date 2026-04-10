@@ -81,14 +81,14 @@ export function CompagnieClient({ compagnie: initial, isAdmin }: { compagnie: Co
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {compagnie.length === 0 && (
-          <div className="col-span-3 text-center py-12 text-muted-foreground bg-white border border-border rounded-lg">
+          <div className="col-span-3 text-center py-12 text-muted-foreground bg-[var(--card)] border border-border rounded-lg">
             Nessuna compagnia. Aggiungine una per iniziare.
           </div>
         )}
         {compagnie.map((c) => (
           <Card key={c.id} className="relative group">
             <CardContent className="pt-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-[#0f4c75] flex items-center justify-center text-white font-bold text-sm shrink-0">
+              <div className="w-12 h-12 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-sm shrink-0">
                 {c.logoUrl
                   // eslint-disable-next-line @next/next/no-img-element
                   ? <img src={c.logoUrl} alt={c.nome} className="w-12 h-12 rounded-full object-contain" />

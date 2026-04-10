@@ -80,14 +80,18 @@ else
 fi
 
 # ── 5. Migrazione DB ─────────────────────────────────────────────────────────
-if [[ "$HAS_NEW_MIGRATIONS" == "true" ]]; then
+MIGRATIONS_DIR="prisma/migrations"
+HAS_MIGRATION_FILES=false
+ls "${MIGRATIONS_DIR}"/*/migration.sql &>/dev/null && HAS_MIGRATION_FILES=true
+
+if [[ "$HAS_NEW_MIGRATIONS" == "true" ]] && [[ "$HAS_MIGRATION_FILES" == "true" ]]; then
   log "Applico migration database..."
   npx prisma migrate deploy
   ok "Migration applicate."
-elif [[ "$SCHEMA_CHANGED" == "true" ]]; then
-  warn "Schema cambiato ma nessuna migration trovata."
-  warn "Se sei in sviluppo usa: npm run db:push"
-  warn "In produzione crea sempre migration con: npx prisma migrate dev --name <nome>"
+elif [[ "$SCHEMA_CHANGED" == "true" ]] || [[ "$HAS_NEW_MIGRATIONS" == "true" ]]; then
+  log "Schema aggiornato, applico db push..."
+  npx prisma db push
+  ok "Schema applicato con db push."
 fi
 
 # Rigenera sempre il Prisma client
@@ -104,12 +108,17 @@ ok "Build completata."
 
 # ── 7. Restart applicazione ──────────────────────────────────────────────────
 log "Restart applicazione..."
-if command -v pm2 &>/dev/null && pm2 list | grep -q "impianti"; then
-  pm2 restart impianti
-  ok "PM2: impianti riavviato."
+if command -v pm2 &>/dev/null; then
+  if pm2 list | grep -q "impianti"; then
+    pm2 restart impianti
+    ok "PM2: impianti riavviato."
+  else
+    pm2 start npm --name "impianti" -- start
+    pm2 save
+    ok "PM2: impianti avviato."
+  fi
 else
-  warn "PM2 non trovato o processo 'impianti' non attivo."
-  warn "Avvia manualmente con: pm2 start npm --name impianti -- start"
+  warn "PM2 non trovato. Avvia manualmente con: pm2 start npm --name impianti -- start"
 fi
 
 # ── Riepilogo ─────────────────────────────────────────────────────────────────
