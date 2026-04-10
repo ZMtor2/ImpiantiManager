@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { ChevronRight, ChevronLeft, CheckCircle2, SkipForward, Save } from "lucide-react"
+import { CheckCircle2, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -37,14 +37,6 @@ const Step1Schema = z.object({
 
 type Step1Data = z.infer<typeof Step1Schema>
 
-const STEPS = [
-  { number: 1, label: "Identificazione" },
-  { number: 2, label: "Proprietario e Gestore" },
-  { number: 3, label: "Apparecchiature" },
-  { number: 4, label: "Rete" },
-  { number: 5, label: "Foto" },
-]
-
 const TIPI_IMPIANTO = [
   { value: "STRADALE", label: "Stradale" },
   { value: "AUTOSTRADALE", label: "Autostradale" },
@@ -62,9 +54,7 @@ const STATI = [
 
 export function PlantWizard({ compagnie }: PlantWizardProps) {
   const router = useRouter()
-  const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
-  const [step1Data, setStep1Data] = useState<Step1Data | null>(null)
 
   const {
     register,
@@ -107,242 +97,112 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
     }
   }, [])
 
-  const onStep1Submit = handleSubmit(async (data: Step1Data) => {
-    setStep1Data(data)
-    setStep(2)
-  })
-
-  const saveAndComplete = handleSubmit(async (data: Step1Data) => {
+  const createAndRedirect = handleSubmit(async (data: Step1Data) => {
     const id = await createPlant(data)
     if (id) {
-      toast.success("Impianto creato con successo")
-      router.push(`/impianti/${id}`)
+      toast.success("Impianto creato! Completa la scheda con i pulsanti Modifica.")
+      router.push(`/impianti/${id}/modifica`)
     }
   })
-
-  const finalCreate = async () => {
-    if (!step1Data) return
-    const id = await createPlant(step1Data)
-    if (id) {
-      toast.success("Impianto creato con successo")
-      router.push(`/impianti/${id}`)
-    }
-  }
 
   return (
     <div className="space-y-6">
-      {/* Step indicator */}
-      <div className="flex items-center gap-0">
-        {STEPS.map((s, i) => (
-          <div key={s.number} className="flex items-center">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              step === s.number
-                ? "bg-[#0f4c75] text-white"
-                : step > s.number
-                ? "bg-green-100 text-green-700"
-                : "bg-muted text-muted-foreground"
-            }`}>
-              {step > s.number ? <CheckCircle2 className="h-3.5 w-3.5" /> : <span className="text-xs">{s.number}</span>}
-              <span className="hidden sm:inline">{s.label}</span>
-            </div>
-            {i < STEPS.length - 1 && <div className="w-4 h-px bg-border" />}
-          </div>
-        ))}
-      </div>
+      <form onSubmit={createAndRedirect} className="space-y-5">
+        <div className="bg-[var(--card)] border border-border rounded-lg p-5 space-y-4">
+          <h2 className="font-semibold text-[var(--primary)]">Dati identificativi</h2>
+          <p className="text-xs text-muted-foreground">I campi con * sono obbligatori. Dopo la creazione potrai aggiungere proprietario, apparecchiature e rete.</p>
 
-      {/* Step 1 */}
-      {step === 1 && (
-        <form onSubmit={onStep1Submit} className="space-y-5">
-          <div className="bg-white border border-border rounded-lg p-5 space-y-4">
-            <h2 className="font-semibold text-[#0f4c75]">Dati identificativi</h2>
-            <p className="text-xs text-muted-foreground">I campi con * sono obbligatori per procedere.</p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <Label htmlFor="indirizzo">Indirizzo *</Label>
-                <Input id="indirizzo" placeholder="Via Roma 1" {...register("indirizzo")} className="mt-1" />
-                {errors.indirizzo && <p className="text-xs text-destructive mt-1">{errors.indirizzo.message}</p>}
-              </div>
-
-              <div>
-                <Label htmlFor="citta">Città *</Label>
-                <Input id="citta" placeholder="Milano" {...register("citta")} className="mt-1" />
-                {errors.citta && <p className="text-xs text-destructive mt-1">{errors.citta.message}</p>}
-              </div>
-
-              <div>
-                <Label htmlFor="compagniaId">Bandiera / Compagnia *</Label>
-                <Select onValueChange={(v) => setValue("compagniaId", v)} value={compagniaId}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Seleziona compagnia..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {compagnie.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.compagniaId && <p className="text-xs text-destructive mt-1">{errors.compagniaId.message}</p>}
-              </div>
-
-              <div>
-                <Label htmlFor="provincia">Provincia</Label>
-                <Input id="provincia" placeholder="MI" maxLength={2} {...register("provincia")} className="mt-1 uppercase" />
-              </div>
-
-              <div>
-                <Label htmlFor="cap">CAP</Label>
-                <Input id="cap" placeholder="20100" maxLength={5} {...register("cap")} className="mt-1" />
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <Label htmlFor="indirizzo">Indirizzo *</Label>
+              <Input id="indirizzo" placeholder="Via Roma 1" {...register("indirizzo")} className="mt-1" />
+              {errors.indirizzo && <p className="text-xs text-destructive mt-1">{errors.indirizzo.message}</p>}
             </div>
 
-            <Separator />
-            <h3 className="text-sm font-medium text-muted-foreground">Dati opzionali</h3>
+            <div>
+              <Label htmlFor="citta">Città *</Label>
+              <Input id="citta" placeholder="Milano" {...register("citta")} className="mt-1" />
+              {errors.citta && <p className="text-xs text-destructive mt-1">{errors.citta.message}</p>}
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="codice">Codice interno</Label>
-                <Input id="codice" placeholder="IMP0001" {...register("codice")} className="mt-1" />
-              </div>
-              <div>
-                <Label htmlFor="alias">Alias</Label>
-                <Input id="alias" placeholder="Ex-Agip angolo semaforo" {...register("alias")} className="mt-1" />
-              </div>
-              <div>
-                <Label htmlFor="tipoImpianto">Tipo impianto</Label>
-                <Select onValueChange={(v) => setValue("tipoImpianto", v)} defaultValue="STRADALE">
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>{TIPI_IMPIANTO.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="stato">Stato</Label>
-                <Select onValueChange={(v) => setValue("stato", v)} defaultValue="ATTIVO">
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>{STATI.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="codiceImpiantoCompagnia">Codice impianto compagnia</Label>
-                <Input id="codiceImpiantoCompagnia" {...register("codiceImpiantoCompagnia")} className="mt-1" />
-              </div>
-              <div>
-                <Label htmlFor="ispettoreZona">Ispettore di zona</Label>
-                <Input id="ispettoreZona" {...register("ispettoreZona")} className="mt-1" />
-              </div>
-              <div>
-                <Label htmlFor="numeroAutorizzazione">N° autorizzazione</Label>
-                <Input id="numeroAutorizzazione" {...register("numeroAutorizzazione")} className="mt-1" />
-              </div>
-              <div>
-                <Label htmlFor="dataApertura">Data apertura</Label>
-                <Input id="dataApertura" type="date" {...register("dataApertura")} className="mt-1" />
-              </div>
+            <div>
+              <Label htmlFor="compagniaId">Bandiera / Compagnia *</Label>
+              <Select onValueChange={(v) => setValue("compagniaId", v)} value={compagniaId}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Seleziona compagnia..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {compagnie.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.compagniaId && <p className="text-xs text-destructive mt-1">{errors.compagniaId.message}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="provincia">Provincia</Label>
+              <Input id="provincia" placeholder="MI" maxLength={2} {...register("provincia")} className="mt-1 uppercase" />
+            </div>
+
+            <div>
+              <Label htmlFor="cap">CAP</Label>
+              <Input id="cap" placeholder="20100" maxLength={5} {...register("cap")} className="mt-1" />
             </div>
           </div>
 
-          <div className="flex justify-between gap-3">
-            <Button type="button" variant="outline" onClick={() => router.push("/impianti")}>Annulla</Button>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={saveAndComplete} disabled={saving}>
-                <Save className="h-4 w-4 mr-1" />Salva e completa dopo
-              </Button>
-              <Button type="submit">
-                Avanti <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+          <Separator />
+          <h3 className="text-sm font-medium text-muted-foreground">Dati opzionali</h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="codice">Codice interno</Label>
+              <Input id="codice" placeholder="IMP0001" {...register("codice")} className="mt-1" />
+            </div>
+            <div>
+              <Label htmlFor="alias">Alias</Label>
+              <Input id="alias" placeholder="Ex-Agip angolo semaforo" {...register("alias")} className="mt-1" />
+            </div>
+            <div>
+              <Label htmlFor="tipoImpianto">Tipo impianto</Label>
+              <Select onValueChange={(v) => setValue("tipoImpianto", v)} defaultValue="STRADALE">
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{TIPI_IMPIANTO.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="stato">Stato</Label>
+              <Select onValueChange={(v) => setValue("stato", v)} defaultValue="ATTIVO">
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{STATI.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="codiceImpiantoCompagnia">Codice impianto compagnia</Label>
+              <Input id="codiceImpiantoCompagnia" {...register("codiceImpiantoCompagnia")} className="mt-1" />
+            </div>
+            <div>
+              <Label htmlFor="ispettoreZona">Ispettore di zona</Label>
+              <Input id="ispettoreZona" {...register("ispettoreZona")} className="mt-1" />
+            </div>
+            <div>
+              <Label htmlFor="numeroAutorizzazione">N° autorizzazione</Label>
+              <Input id="numeroAutorizzazione" {...register("numeroAutorizzazione")} className="mt-1" />
+            </div>
+            <div>
+              <Label htmlFor="dataApertura">Data apertura</Label>
+              <Input id="dataApertura" type="date" {...register("dataApertura")} className="mt-1" />
             </div>
           </div>
-        </form>
-      )}
-
-      {/* Step 2 — Proprietario e Gestore (simplified) */}
-      {step === 2 && (
-        <div className="space-y-5">
-          <div className="bg-white border border-border rounded-lg p-5 space-y-4">
-            <h2 className="font-semibold text-[#0f4c75]">Proprietario e Gestore</h2>
-            <p className="text-sm text-muted-foreground">
-              Potrai aggiungere proprietario e gestore dalla scheda impianto dopo la creazione.
-              Per ora puoi saltare questo passaggio.
-            </p>
-          </div>
-          <WizardNavigation step={step} totalSteps={5} onBack={() => setStep(1)} onNext={() => setStep(3)} onSkip={() => setStep(3)} onSaveComplete={finalCreate} saving={saving} />
         </div>
-      )}
 
-      {/* Step 3 — Apparecchiature (simplified) */}
-      {step === 3 && (
-        <div className="space-y-5">
-          <div className="bg-white border border-border rounded-lg p-5 space-y-4">
-            <h2 className="font-semibold text-[#0f4c75]">Apparecchiature</h2>
-            <p className="text-sm text-muted-foreground">
-              Potrai aggiungere apparecchiature dalla scheda impianto dopo la creazione.
-              Per ora puoi saltare questo passaggio.
-            </p>
-          </div>
-          <WizardNavigation step={step} totalSteps={5} onBack={() => setStep(2)} onNext={() => setStep(4)} onSkip={() => setStep(4)} onSaveComplete={finalCreate} saving={saving} />
-        </div>
-      )}
-
-      {/* Step 4 — Rete */}
-      {step === 4 && (
-        <div className="space-y-5">
-          <div className="bg-white border border-border rounded-lg p-5 space-y-4">
-            <h2 className="font-semibold text-[#0f4c75]">Registro di rete</h2>
-            <p className="text-sm text-muted-foreground">
-              Potrai aggiungere dispositivi di rete dalla scheda impianto dopo la creazione.
-            </p>
-          </div>
-          <WizardNavigation step={step} totalSteps={5} onBack={() => setStep(3)} onNext={() => setStep(5)} onSkip={() => setStep(5)} onSaveComplete={finalCreate} saving={saving} />
-        </div>
-      )}
-
-      {/* Step 5 — Foto */}
-      {step === 5 && (
-        <div className="space-y-5">
-          <div className="bg-white border border-border rounded-lg p-5 space-y-4">
-            <h2 className="font-semibold text-[#0f4c75]">Foto</h2>
-            <p className="text-sm text-muted-foreground">
-              Potrai caricare foto dalla scheda impianto dopo la creazione.
-            </p>
-          </div>
-          <div className="flex justify-between gap-3">
-            <Button variant="outline" onClick={() => setStep(4)}>
-              <ChevronLeft className="h-4 w-4 mr-1" />Indietro
-            </Button>
-            <Button onClick={finalCreate} disabled={saving}>
-              {saving ? "Creazione..." : "Crea impianto"}
-              <CheckCircle2 className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function WizardNavigation({
-  step, totalSteps, onBack, onNext, onSkip, onSaveComplete, saving
-}: {
-  step: number; totalSteps: number; onBack: () => void; onNext: () => void; onSkip: () => void; onSaveComplete: () => void; saving: boolean
-}) {
-  return (
-    <div className="flex justify-between gap-3">
-      <Button variant="outline" onClick={onBack}>
-        <ChevronLeft className="h-4 w-4 mr-1" />Indietro
-      </Button>
-      <div className="flex gap-2">
-        <Button variant="ghost" onClick={onSkip}>
-          <SkipForward className="h-4 w-4 mr-1" />Salta
-        </Button>
-        <Button variant="outline" onClick={onSaveComplete} disabled={saving}>
-          <Save className="h-4 w-4 mr-1" />Salva e completa dopo
-        </Button>
-        {step < totalSteps && (
-          <Button onClick={onNext}>
-            Avanti <ChevronRight className="h-4 w-4 ml-1" />
+        <div className="flex justify-between gap-3">
+          <Button type="button" variant="outline" onClick={() => router.push("/impianti")}>Annulla</Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? <><Save className="h-4 w-4 mr-1 animate-spin" />Creazione...</> : <><CheckCircle2 className="h-4 w-4 mr-1" />Crea impianto</>}
           </Button>
-        )}
-      </div>
+        </div>
+      </form>
     </div>
   )
 }

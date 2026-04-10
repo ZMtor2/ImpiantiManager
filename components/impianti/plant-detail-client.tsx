@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Trash2, Plus } from "lucide-react"
+import Link from "next/link"
+import { Trash2, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
@@ -36,6 +37,12 @@ export function PlantDetailClient({ plantId, canWrite }: PlantDetailClientProps)
 
   return (
     <div className="flex gap-2 shrink-0">
+      <Button variant="outline" size="sm" asChild>
+        <Link href={`/impianti/${plantId}/modifica`}>
+          <Pencil className="h-4 w-4" />
+          <span className="hidden sm:inline ml-1">Modifica</span>
+        </Link>
+      </Button>
       <Button
         variant="outline"
         size="sm"
@@ -49,3 +56,4 @@ export function PlantDetailClient({ plantId, canWrite }: PlantDetailClientProps)
     </div>
   )
 }
+
