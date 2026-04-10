@@ -16,17 +16,17 @@ log "Verifica sistema..."
 [[ "$(uname -s)" == "Linux" ]] || fail "Questo script richiede Ubuntu/Debian Linux."
 ok "Sistema Linux rilevato."
 
-# ── 2. Node.js 20+ ───────────────────────────────────────────────────────────
+# ── 2. Node.js 22+ (richiesto da Prisma 7) ───────────────────────────────────
 log "Verifica Node.js..."
 NODE_OK=false
 if command -v node &>/dev/null; then
   NODE_VER=$(node -e "console.log(parseInt(process.versions.node))")
-  [[ "$NODE_VER" -ge 20 ]] && NODE_OK=true
+  [[ "$NODE_VER" -ge 22 ]] && NODE_OK=true
 fi
 
 if [[ "$NODE_OK" == "false" ]]; then
-  log "Installazione Node.js 20..."
-  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+  log "Installazione Node.js 22..."
+  curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
   sudo apt-get install -y nodejs
   ok "Node.js $(node -v) installato."
 else
