@@ -11,6 +11,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
