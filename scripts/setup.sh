@@ -16,7 +16,13 @@ log "Verifica sistema..."
 [[ "$(uname -s)" == "Linux" ]] || fail "Questo script è pensato per Ubuntu/Debian Linux."
 
 # ── 2. Node.js 20+ ───────────────────────────────────────────────────────────
-if ! command -v node &>/dev/null || [[ $(node -e "process.exit(parseInt(process.versions.node)<20?1:0)" ; echo $?) -ne 0 ]]; then
+NODE_OK=false
+if command -v node &>/dev/null; then
+  NODE_VER=$(node -e "console.log(parseInt(process.versions.node))")
+  [[ "$NODE_VER" -ge 20 ]] && NODE_OK=true
+fi
+
+if [[ "$NODE_OK" == "false" ]]; then
   log "Installazione Node.js 20..."
   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - &>/dev/null
   sudo apt-get install -y nodejs &>/dev/null
@@ -50,25 +56,38 @@ fi
 # ── 5. File .env ─────────────────────────────────────────────────────────────
 log "Configurazione variabili d'ambiente..."
 if [[ ! -f .env ]]; then
+  [[ -f .env.example ]] || fail "File .env.example non trovato. Assicurati di essere nella cartella del progetto."
   cp .env.example .env
-  # Genera NEXTAUTH_SECRET casuale
-  SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-  sed -i "s|NEXTAUTH_SECRET=.*|NEXTAUTH_SECRET=${SECRET}|" .env
+  ok ".env creato da .env.example"
+fi
 
-  # Chiedi l'IP/dominio del server
-  echo ""
-  read -rp "  Indirizzo pubblico del server (es. 192.168.1.100 o mio.dominio.it): " SERVER_ADDR
-  PORT=${PORT:-3000}
-  if [[ "$SERVER_ADDR" == *"."* && ! "$SERVER_ADDR" =~ ^[0-9] ]] || [[ "$SERVER_ADDR" == *"."* ]]; then
-    # dominio o IP, aggiungi http se non presente
-    if [[ "$SERVER_ADDR" != http* ]]; then
-      SERVER_ADDR="http://${SERVER_ADDR}"
-    fi
-  fi
-  sed -i "s|NEXTAUTH_URL=.*|NEXTAUTH_URL=${SERVER_ADDR}:${PORT}|" .env
-  ok ".env creato con NEXTAUTH_SECRET generato automaticamente."
-else
-  ok ".env già esistente, skip."
+# Genera AUTH_SECRET casuale (rimpiazza placeholder o valore debole)
+SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+sed -i "s|AUTH_SECRET=.*|AUTH_SECRET=\"${SECRET}\"|" .env
+ok "AUTH_SECRET generato automaticamente."
+
+# Chiedi l'indirizzo del server
+echo ""
+echo -e "  ${YELLOW}Il file .env si trova nella cartella del progetto (file nascosto, inizia con punto).${NC}"
+echo -e "  Per vederlo: ${BLUE}ls -la${NC} oppure ${BLUE}nano .env${NC}"
+echo ""
+read -rp "  Indirizzo pubblico del server (es. 192.168.1.100 o mio.dominio.it) [invio = localhost]: " SERVER_ADDR
+SERVER_ADDR="${SERVER_ADDR:-localhost}"
+PORT="${PORT:-3000}"
+
+# Aggiungi schema http:// se mancante
+if [[ "$SERVER_ADDR" != http* ]]; then
+  SERVER_ADDR="http://${SERVER_ADDR}"
+fi
+
+sed -i "s|NEXTAUTH_URL=.*|NEXTAUTH_URL=\"${SERVER_ADDR}:${PORT}\"|" .env
+ok "NEXTAUTH_URL impostato a: ${SERVER_ADDR}:${PORT}"
+
+echo ""
+echo -e "  ${YELLOW}Vuoi modificare altri valori nel .env ora? (DATABASE_URL, MinIO, SMTP)${NC}"
+read -rp "  Aprire .env con nano? [s/N] " OPEN_ENV
+if [[ "${OPEN_ENV,,}" == "s" ]]; then
+  nano .env
 fi
 
 # ── 6. Docker Compose (DB + MinIO) ───────────────────────────────────────────
@@ -116,19 +135,21 @@ pm2 save
 # Configura avvio automatico
 PM2_STARTUP=$(pm2 startup 2>&1 | grep "sudo" | tail -1)
 if [[ -n "$PM2_STARTUP" ]]; then
-  eval "$PM2_STARTUP" &>/dev/null && ok "PM2 configurato per avvio automatico." || warn "Esegui manualmente: $PM2_STARTUP"
+  eval "$PM2_STARTUP" &>/dev/null && ok "PM2 configurato per avvio automatico." \
+    || warn "Esegui manualmente: $PM2_STARTUP"
 fi
 
 # ── Riepilogo ─────────────────────────────────────────────────────────────────
+FINAL_URL=$(grep "^NEXTAUTH_URL=" .env | cut -d= -f2- | tr -d '"')
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}  ImpiantiManager avviato con successo!${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-NEXTAUTH_URL=$(grep NEXTAUTH_URL .env | cut -d= -f2-)
-echo -e "  URL:         ${BLUE}${NEXTAUTH_URL}${NC}"
+echo -e "  URL:         ${BLUE}${FINAL_URL}${NC}"
 echo -e "  Admin:       admin@impiantimanager.it / admin123"
 echo -e "  Logs:        pm2 logs impianti"
 echo -e "  Stato:       pm2 status"
+echo -e "  .env:        nano .env  (file nascosto nella cartella progetto)"
 echo ""
 echo -e "${YELLOW}  Cambia la password admin dopo il primo accesso!${NC}"
 echo ""
