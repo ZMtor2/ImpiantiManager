@@ -90,7 +90,7 @@ export default async function ImpiantiPage({ searchParams }: { searchParams: Pro
 
       <PlantFilters compagnie={compagnie.map(c => ({ id: c.id, nome: c.nome }))} />
 
-      <div className="bg-white border border-border rounded-lg overflow-hidden">
+      <div className="bg-[var(--card)] border border-border rounded-lg overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>

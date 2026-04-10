@@ -82,7 +82,7 @@ export default async function PlantDetailPage({ params }: { params: Promise<{ id
         <Link href="/impianti"><ArrowLeft className="h-4 w-4 mr-1" />Impianti</Link>
       </Button>
 
-      <div className="bg-white border border-border rounded-lg p-5">
+      <div className="bg-[var(--card)] border border-border rounded-lg p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-3 flex-wrap mb-2">

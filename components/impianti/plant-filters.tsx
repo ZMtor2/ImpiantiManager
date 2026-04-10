@@ -52,7 +52,7 @@ export function PlantFilters({ compagnie }: PlantFiltersProps) {
   }, [router])
 
   return (
-    <div className="space-y-4 bg-white border border-border rounded-lg p-4">
+    <div className="space-y-4 bg-[var(--card)] border border-border rounded-lg p-4">
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

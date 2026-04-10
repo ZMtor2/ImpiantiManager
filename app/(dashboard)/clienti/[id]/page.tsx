@@ -46,7 +46,7 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
       <Button variant="ghost" size="sm" asChild className="-ml-2">
         <Link href="/clienti"><ArrowLeft className="h-4 w-4 mr-1" />Clienti</Link>
       </Button>
-      <div className="bg-white border border-border rounded-lg p-5">
+      <div className="bg-[var(--card)] border border-border rounded-lg p-5">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-bold text-[var(--primary)]">{cliente.ragioneSociale}</h1>

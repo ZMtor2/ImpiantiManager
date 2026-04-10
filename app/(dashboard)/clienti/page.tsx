@@ -79,7 +79,7 @@ export default async function ClientiPage({ searchParams }: { searchParams: Prom
         {q && <Button type="button" variant="ghost" size="sm" asChild><Link href="/clienti">Annulla</Link></Button>}
       </form>
 
-      <div className="bg-white border border-border rounded-lg overflow-hidden">
+      <div className="bg-[var(--card)] border border-border rounded-lg overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>

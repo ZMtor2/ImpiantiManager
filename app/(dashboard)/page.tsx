@@ -289,7 +289,7 @@ export default async function DashboardPage() {
                   className={`group block rounded-xl border p-4 transition-all duration-200 ${
                     isEmpty
                       ? "border-gray-100 bg-gray-50 cursor-default pointer-events-none"
-                      : "border-gray-200 bg-white hover:border-[var(--primary)] hover:shadow-sm"
+                      : "border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)] hover:shadow-sm"
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
@@ -330,12 +330,12 @@ export default async function DashboardPage() {
                 Nessun impianto trovato.
               </CardContent>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-[var(--border)]">
                 {recenti.map((plant) => (
                   <Link
                     key={plant.id}
                     href={`/impianti/${plant.id}`}
-                    className="group flex items-start gap-3 px-5 py-4 hover:bg-gray-50 transition-colors"
+                    className="group flex items-start gap-3 px-5 py-4 hover:bg-[var(--secondary)] transition-colors"
                   >
                     {/* Company avatar */}
                     <div className="shrink-0 mt-0.5">

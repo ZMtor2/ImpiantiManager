@@ -81,7 +81,7 @@ export function CompagnieClient({ compagnie: initial, isAdmin }: { compagnie: Co
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {compagnie.length === 0 && (
-          <div className="col-span-3 text-center py-12 text-muted-foreground bg-white border border-border rounded-lg">
+          <div className="col-span-3 text-center py-12 text-muted-foreground bg-[var(--card)] border border-border rounded-lg">
             Nessuna compagnia. Aggiungine una per iniziare.
           </div>
         )}
