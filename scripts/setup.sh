@@ -137,13 +137,16 @@ npx prisma generate
 ok "Prisma client generato."
 
 # ── 8. Schema DB + seed ──────────────────────────────────────────────────────
-log "Migrazione schema database..."
-if npx prisma migrate deploy 2>/dev/null; then
+log "Applicazione schema database..."
+# Se esiste una cartella migrations con file SQL usa migrate deploy,
+# altrimenti crea lo schema direttamente con db push
+MIGRATIONS_DIR="prisma/migrations"
+if [[ -d "$MIGRATIONS_DIR" ]] && ls "${MIGRATIONS_DIR}"/*/migration.sql &>/dev/null; then
+  npx prisma migrate deploy
   ok "Migration applicate."
 else
-  warn "Nessuna migration trovata, uso db:push..."
-  npm run db:push
-  ok "Schema applicato con db:push."
+  npx prisma db push
+  ok "Schema applicato con db push."
 fi
 
 log "Seed dati iniziali..."
