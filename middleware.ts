@@ -1,4 +1,10 @@
-import { auth } from "@/lib/auth";
+/**
+ * Middleware — usa la config Edge-safe (senza bcrypt/prisma).
+ */
+import NextAuth from "next-auth";
+import { authConfig } from "@/auth.config";
+
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
