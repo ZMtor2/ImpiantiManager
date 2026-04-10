@@ -6,6 +6,7 @@
 import type { NextAuthConfig } from "next-auth";
 
 export const authConfig: NextAuthConfig = {
+  trustHost: true,         // permette login da qualsiasi host (necessario con IP o proxy)
   providers: [], // I provider (Credentials + bcrypt) stanno in lib/auth.ts
   session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
   callbacks: {

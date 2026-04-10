@@ -102,8 +102,8 @@ read -rp "  Indirizzo del server (IP o dominio, invio = localhost): " SERVER_ADD
 SERVER_ADDR="${SERVER_ADDR:-localhost}"
 [[ "$SERVER_ADDR" != http* ]] && SERVER_ADDR="http://${SERVER_ADDR}"
 PORT="${PORT:-3000}"
-sed -i "s|NEXTAUTH_URL=.*|NEXTAUTH_URL=\"${SERVER_ADDR}:${PORT}\"|" .env
-ok "NEXTAUTH_URL → ${SERVER_ADDR}:${PORT}"
+sed -i "s|AUTH_URL=.*|AUTH_URL=\"${SERVER_ADDR}:${PORT}\"|" .env
+ok "AUTH_URL → ${SERVER_ADDR}:${PORT}"
 
 # Offri di aprire .env
 echo ""
