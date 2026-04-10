@@ -127,10 +127,14 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
-# ── 7. Dipendenze npm ────────────────────────────────────────────────────────
+# ── 7. Dipendenze npm + Prisma client ───────────────────────────────────────
 log "Installazione dipendenze npm..."
 npm install
 ok "Dipendenze installate."
+
+log "Generazione Prisma client..."
+npx prisma generate
+ok "Prisma client generato."
 
 # ── 8. Schema DB + seed ──────────────────────────────────────────────────────
 log "Migrazione schema database..."
