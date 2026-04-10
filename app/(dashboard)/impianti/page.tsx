@@ -78,7 +78,7 @@ export default async function ImpiantiPage({ searchParams }: { searchParams: Pro
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0f4c75]">Impianti</h1>
+          <h1 className="text-2xl font-bold text-[var(--primary)]">Impianti</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{total} impianti trovati</p>
         </div>
         {canWrite && (
@@ -108,17 +108,17 @@ export default async function ImpiantiPage({ searchParams }: { searchParams: Pro
               <tr key={plant.id} className="hover:bg-muted/30 transition-colors cursor-pointer group">
                 <td className="px-4 py-3">
                   <Link href={`/impianti/${plant.id}`} className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[#0f4c75] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white text-xs font-bold shrink-0">
                       {plant.compagnia ? getInitials(plant.compagnia.nome) : "—"}
                     </div>
-                    <span className="font-medium text-sm group-hover:text-[#0f4c75] hidden sm:block">{plant.compagnia?.nome ?? "—"}</span>
+                    <span className="font-medium text-sm group-hover:text-[var(--primary)] hidden sm:block">{plant.compagnia?.nome ?? "—"}</span>
                   </Link>
                 </td>
                 <td className="px-4 py-3">
                   <Link href={`/impianti/${plant.id}`} className="block">
-                    <p className="font-medium group-hover:text-[#0f4c75]">{plant.indirizzo}</p>
+                    <p className="font-medium group-hover:text-[var(--primary)]">{plant.indirizzo}</p>
                     <p className="text-xs text-muted-foreground">{plant.citta} ({plant.provincia})</p>
-                    {plant.alias && <p className="text-xs text-[#f97316]">{plant.alias}</p>}
+                    {plant.alias && <p className="text-xs text-[var(--muted-foreground)]">{plant.alias}</p>}
                   </Link>
                 </td>
                 <td className="px-4 py-3 hidden sm:table-cell"><Link href={`/impianti/${plant.id}`}><span className="text-xs text-muted-foreground">{tipoImpiantoLabel[plant.tipoImpianto]}</span></Link></td>

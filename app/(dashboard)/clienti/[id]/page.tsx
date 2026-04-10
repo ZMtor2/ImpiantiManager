@@ -49,7 +49,7 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
       <div className="bg-white border border-border rounded-lg p-5">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[#0f4c75]">{cliente.ragioneSociale}</h1>
+            <h1 className="text-2xl font-bold text-[var(--primary)]">{cliente.ragioneSociale}</h1>
             {cliente.partitaIva && <p className="text-sm text-muted-foreground mt-1">P.IVA: {cliente.partitaIva}</p>}
           </div>
           {canWrite && (
@@ -83,8 +83,8 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
                           <p className="font-medium text-sm">{c.nome}</p>
                           {c.ruolo && <p className="text-xs text-muted-foreground">{c.ruolo}</p>}
                           <div className="flex flex-wrap gap-3 mt-1">
-                            {c.telefono && <a href={`tel:${c.telefono}`} className="flex items-center gap-1 text-xs text-[#0f4c75] hover:underline"><Phone className="h-3 w-3" />{c.telefono}</a>}
-                            {c.email && <a href={`mailto:${c.email}`} className="flex items-center gap-1 text-xs text-[#0f4c75] hover:underline"><Mail className="h-3 w-3" />{c.email}</a>}
+                            {c.telefono && <a href={`tel:${c.telefono}`} className="flex items-center gap-1 text-xs text-[var(--primary)] hover:underline"><Phone className="h-3 w-3" />{c.telefono}</a>}
+                            {c.email && <a href={`mailto:${c.email}`} className="flex items-center gap-1 text-xs text-[var(--primary)] hover:underline"><Mail className="h-3 w-3" />{c.email}</a>}
                           </div>
                         </div>
                       </div>
@@ -99,7 +99,7 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
                 <div className="space-y-2">
                   {cliente.impiantiProprietario.map((p: { id: string; indirizzo: string; citta: string; stato: string; codice: string | null; compagnia: { nome: string } | null }) => (
                     <Link key={p.id} href={`/impianti/${p.id}`} className="flex items-center justify-between p-2 rounded hover:bg-muted transition-colors group">
-                      <div><p className="text-sm font-medium group-hover:text-[#0f4c75]">{p.compagnia?.nome ?? "—"} — {p.indirizzo}, {p.citta}</p>{p.codice && <p className="text-xs text-muted-foreground">{p.codice}</p>}</div>
+                      <div><p className="text-sm font-medium group-hover:text-[var(--primary)]">{p.compagnia?.nome ?? "—"} — {p.indirizzo}, {p.citta}</p>{p.codice && <p className="text-xs text-muted-foreground">{p.codice}</p>}</div>
                       <span className={`text-xs px-2 py-0.5 rounded ${statoColor[p.stato]}`}>{statoImpiantoLabel[p.stato]}</span>
                     </Link>
                   ))}
@@ -114,7 +114,7 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
                 <div className="space-y-2">
                   {cliente.impiantiGestore.map((p: { id: string; indirizzo: string; citta: string; stato: string; codice: string | null; compagnia: { nome: string } | null }) => (
                     <Link key={p.id} href={`/impianti/${p.id}`} className="flex items-center justify-between p-2 rounded hover:bg-muted transition-colors group">
-                      <div><p className="text-sm font-medium group-hover:text-[#0f4c75]">{p.compagnia?.nome ?? "—"} — {p.indirizzo}, {p.citta}</p>{p.codice && <p className="text-xs text-muted-foreground">{p.codice}</p>}</div>
+                      <div><p className="text-sm font-medium group-hover:text-[var(--primary)]">{p.compagnia?.nome ?? "—"} — {p.indirizzo}, {p.citta}</p>{p.codice && <p className="text-xs text-muted-foreground">{p.codice}</p>}</div>
                       <span className={`text-xs px-2 py-0.5 rounded ${statoColor[p.stato]}`}>{statoImpiantoLabel[p.stato]}</span>
                     </Link>
                   ))}

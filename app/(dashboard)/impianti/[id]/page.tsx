@@ -86,10 +86,10 @@ export default async function PlantDetailPage({ params }: { params: Promise<{ id
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-3 flex-wrap mb-2">
-              <div className="w-10 h-10 rounded-full bg-[#0f4c75] flex items-center justify-center text-white font-bold text-sm shrink-0">
+              <div className="w-10 h-10 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-sm shrink-0">
                 {plant.compagnia?.nome.slice(0,2).toUpperCase() ?? "—"}
               </div>
-              <h1 className="text-xl font-bold text-[#0f4c75]">{plantTitle}</h1>
+              <h1 className="text-xl font-bold text-[var(--primary)]">{plantTitle}</h1>
             </div>
             <div className="flex flex-wrap gap-2 text-sm">
               <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${statoColor[plant.stato]}`}>{statoImpiantoLabel[plant.stato]}</span>
@@ -103,7 +103,7 @@ export default async function PlantDetailPage({ params }: { params: Promise<{ id
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground">Completezza scheda:</span>
             <div className="flex-1 bg-muted rounded-full h-2 max-w-xs">
-              <div className="bg-[#0f4c75] h-2 rounded-full transition-all" style={{ width: `${completePct}%` }} />
+              <div className="bg-[var(--primary)] h-2 rounded-full transition-all" style={{ width: `${completePct}%` }} />
             </div>
             <span className="text-xs font-semibold">{completePct}%</span>
           </div>
@@ -114,7 +114,7 @@ export default async function PlantDetailPage({ params }: { params: Promise<{ id
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4 text-[#0f4c75]" />Dati generali</CardTitle>
+              <CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4 text-[var(--primary)]" />Dati generali</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-3 text-sm">
               <div><span className="text-muted-foreground text-xs">Indirizzo</span><p className="font-medium">{plant.indirizzo}</p></div>
@@ -129,7 +129,7 @@ export default async function PlantDetailPage({ params }: { params: Promise<{ id
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2"><Fuel className="h-4 w-4 text-[#0f4c75]" />Bandiera</CardTitle>
+              <CardTitle className="text-base flex items-center gap-2"><Fuel className="h-4 w-4 text-[var(--primary)]" />Bandiera</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-3 text-sm">
               <div><span className="text-muted-foreground text-xs">Compagnia</span><p className="font-medium">{plant.compagnia?.nome ?? "—"}</p></div>
@@ -142,7 +142,7 @@ export default async function PlantDetailPage({ params }: { params: Promise<{ id
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="h-4 w-4 text-[#0f4c75]" />Proprietario
+                  <Users className="h-4 w-4 text-[var(--primary)]" />Proprietario
                   {plant.clienteManutenzione === "PROPRIETARIO" && <span className="ml-auto text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">Referente</span>}
                 </CardTitle>
               </CardHeader>
@@ -160,7 +160,7 @@ export default async function PlantDetailPage({ params }: { params: Promise<{ id
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="h-4 w-4 text-[#0f4c75]" />Gestore
+                  <Users className="h-4 w-4 text-[var(--primary)]" />Gestore
                   {plant.clienteManutenzione === "GESTORE" && <span className="ml-auto text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">Referente</span>}
                 </CardTitle>
               </CardHeader>
@@ -180,7 +180,7 @@ export default async function PlantDetailPage({ params }: { params: Promise<{ id
           {plant.apparecchiature?.length > 0 && (
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2"><Cpu className="h-4 w-4 text-[#0f4c75]" />Apparecchiature ({plant.apparecchiature.length})</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2"><Cpu className="h-4 w-4 text-[var(--primary)]" />Apparecchiature ({plant.apparecchiature.length})</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {erogatori.length > 0 && (
@@ -268,7 +268,7 @@ export default async function PlantDetailPage({ params }: { params: Promise<{ id
 
           {plant.networkDevices?.length > 0 && (
             <Card>
-              <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Network className="h-4 w-4 text-[#0f4c75]" />Registro di rete ({plant.networkDevices.length})</CardTitle></CardHeader>
+              <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Network className="h-4 w-4 text-[var(--primary)]" />Registro di rete ({plant.networkDevices.length})</CardTitle></CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
@@ -295,7 +295,7 @@ export default async function PlantDetailPage({ params }: { params: Promise<{ id
           </Card>
           {plant.documenti?.filter((d: { tipo: string }) => d.tipo === "FOTO").length > 0 && (
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Camera className="h-4 w-4 text-[#0f4c75]" />Foto ({plant.documenti.filter((d: { tipo: string }) => d.tipo === "FOTO").length})</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Camera className="h-4 w-4 text-[var(--primary)]" />Foto ({plant.documenti.filter((d: { tipo: string }) => d.tipo === "FOTO").length})</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-1">
                   {plant.documenti.filter((d: { tipo: string }) => d.tipo === "FOTO").slice(0, 6).map((doc: { id: string; urlStorage: string; nomeFile: string }) => (

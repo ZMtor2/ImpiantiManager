@@ -88,7 +88,7 @@ export function CompagnieClient({ compagnie: initial, isAdmin }: { compagnie: Co
         {compagnie.map((c) => (
           <Card key={c.id} className="relative group">
             <CardContent className="pt-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-[#0f4c75] flex items-center justify-center text-white font-bold text-sm shrink-0">
+              <div className="w-12 h-12 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-sm shrink-0">
                 {c.logoUrl
                   // eslint-disable-next-line @next/next/no-img-element
                   ? <img src={c.logoUrl} alt={c.nome} className="w-12 h-12 rounded-full object-contain" />

@@ -17,7 +17,7 @@ export default async function CompagniePage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-[#0f4c75]">Compagnie Petrolifere</h1>
+        <h1 className="text-2xl font-bold text-[var(--primary)]">Compagnie Petrolifere</h1>
         <p className="text-sm text-muted-foreground mt-1">Gestisci le bandiere/compagnie degli impianti.</p>
       </div>
       <CompagnieClient compagnie={compagnie} isAdmin={userRole === "ADMIN"} />

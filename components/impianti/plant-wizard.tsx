@@ -137,7 +137,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
           <div key={s.number} className="flex items-center">
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
               step === s.number
-                ? "bg-[#0f4c75] text-white"
+                ? "bg-[var(--primary)] text-white"
                 : step > s.number
                 ? "bg-green-100 text-green-700"
                 : "bg-muted text-muted-foreground"
@@ -154,7 +154,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
       {step === 1 && (
         <form onSubmit={onStep1Submit} className="space-y-5">
           <div className="bg-white border border-border rounded-lg p-5 space-y-4">
-            <h2 className="font-semibold text-[#0f4c75]">Dati identificativi</h2>
+            <h2 className="font-semibold text-[var(--primary)]">Dati identificativi</h2>
             <p className="text-xs text-muted-foreground">I campi con * sono obbligatori per procedere.</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -259,7 +259,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
       {step === 2 && (
         <div className="space-y-5">
           <div className="bg-white border border-border rounded-lg p-5 space-y-4">
-            <h2 className="font-semibold text-[#0f4c75]">Proprietario e Gestore</h2>
+            <h2 className="font-semibold text-[var(--primary)]">Proprietario e Gestore</h2>
             <p className="text-sm text-muted-foreground">
               Potrai aggiungere proprietario e gestore dalla scheda impianto dopo la creazione.
               Per ora puoi saltare questo passaggio.
@@ -273,7 +273,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
       {step === 3 && (
         <div className="space-y-5">
           <div className="bg-white border border-border rounded-lg p-5 space-y-4">
-            <h2 className="font-semibold text-[#0f4c75]">Apparecchiature</h2>
+            <h2 className="font-semibold text-[var(--primary)]">Apparecchiature</h2>
             <p className="text-sm text-muted-foreground">
               Potrai aggiungere apparecchiature dalla scheda impianto dopo la creazione.
               Per ora puoi saltare questo passaggio.
@@ -287,7 +287,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
       {step === 4 && (
         <div className="space-y-5">
           <div className="bg-white border border-border rounded-lg p-5 space-y-4">
-            <h2 className="font-semibold text-[#0f4c75]">Registro di rete</h2>
+            <h2 className="font-semibold text-[var(--primary)]">Registro di rete</h2>
             <p className="text-sm text-muted-foreground">
               Potrai aggiungere dispositivi di rete dalla scheda impianto dopo la creazione.
             </p>
@@ -300,7 +300,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
       {step === 5 && (
         <div className="space-y-5">
           <div className="bg-white border border-border rounded-lg p-5 space-y-4">
-            <h2 className="font-semibold text-[#0f4c75]">Foto</h2>
+            <h2 className="font-semibold text-[var(--primary)]">Foto</h2>
             <p className="text-sm text-muted-foreground">
               Potrai caricare foto dalla scheda impianto dopo la creazione.
             </p>

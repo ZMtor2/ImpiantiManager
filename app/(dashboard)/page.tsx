@@ -120,10 +120,10 @@ export default async function DashboardPage() {
   if (dbError) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-        <div className="rounded-full bg-orange-100 p-4">
-          <LayoutDashboard className="h-10 w-10 text-[#f97316]" />
+        <div className="rounded-full bg-blue-50 p-4">
+          <LayoutDashboard className="h-10 w-10 text-[var(--muted-foreground)]" />
         </div>
-        <h2 className="text-xl font-semibold text-[#0f4c75]">
+        <h2 className="text-xl font-semibold text-[var(--primary)]">
           Impossibile caricare i dati
         </h2>
         <p className="text-sm text-gray-500 max-w-sm">
@@ -138,14 +138,11 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       {/* Page header */}
       <div className="flex items-center gap-3">
-        <div
-          className="rounded-lg p-2"
-          style={{ background: "#0f4c75" }}
-        >
+        <div className="rounded-lg p-2 bg-[var(--primary)]">
           <LayoutDashboard className="h-5 w-5 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-[#0f4c75]">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-[var(--primary)]">Dashboard</h1>
           <p className="text-sm text-gray-500">
             {totalImpianti} impianti totali in gestione
           </p>
@@ -233,7 +230,7 @@ export default async function DashboardPage() {
                 href={`/impianti?compagniaId=${c.id}`}
                 className="group block"
               >
-                <Card className="h-full hover:border-[#0f4c75] hover:shadow-md transition-all duration-200">
+                <Card className="h-full hover:border-[var(--primary)] hover:shadow-md transition-all duration-200">
                   <CardContent className="flex items-center gap-4 p-5">
                     {/* Logo or initials avatar */}
                     <div className="shrink-0">
@@ -245,17 +242,14 @@ export default async function DashboardPage() {
                           className="h-12 w-12 rounded-full object-contain border border-gray-200 bg-white p-1"
                         />
                       ) : (
-                        <div
-                          className="h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-                          style={{ background: "#0f4c75" }}
-                        >
+                        <div className="h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 bg-[var(--primary)]">
                           {getInitials(c.nome)}
                         </div>
                       )}
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-gray-800 group-hover:text-[#0f4c75] truncate transition-colors">
+                      <p className="font-semibold text-gray-800 group-hover:text-[var(--primary)] truncate transition-colors">
                         {c.nome}
                       </p>
                       <p className="text-sm text-gray-500 mt-0.5">
@@ -265,10 +259,7 @@ export default async function DashboardPage() {
                     </div>
 
                     {/* Count badge */}
-                    <div
-                      className="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold text-white"
-                      style={{ background: "#f97316" }}
-                    >
+                    <div className="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold bg-[var(--primary)]/10 text-[var(--primary)]">
                       {c._count.impianti}
                     </div>
                   </CardContent>
@@ -298,13 +289,13 @@ export default async function DashboardPage() {
                   className={`group block rounded-xl border p-4 transition-all duration-200 ${
                     isEmpty
                       ? "border-gray-100 bg-gray-50 cursor-default pointer-events-none"
-                      : "border-gray-200 bg-white hover:border-[#0f4c75] hover:shadow-sm"
+                      : "border-gray-200 bg-white hover:border-[var(--primary)] hover:shadow-sm"
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <Building2
                       className={`h-4 w-4 shrink-0 ${
-                        isEmpty ? "text-gray-300" : "text-[#0f4c75]"
+                        isEmpty ? "text-gray-300" : "text-[var(--primary)]"
                       }`}
                     />
                     <p
@@ -317,7 +308,7 @@ export default async function DashboardPage() {
                   </div>
                   <p
                     className={`text-3xl font-bold ${
-                      isEmpty ? "text-gray-200" : "text-[#0f4c75]"
+                      isEmpty ? "text-gray-200" : "text-[var(--primary)]"
                     }`}
                   >
                     {count}
@@ -356,10 +347,7 @@ export default async function DashboardPage() {
                           className="h-8 w-8 rounded-full object-contain border border-gray-200 bg-white p-0.5"
                         />
                       ) : (
-                        <div
-                          className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                          style={{ background: "#0f4c75" }}
-                        >
+                        <div className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 bg-[var(--primary)]">
                           {plant.compagnia
                             ? getInitials(plant.compagnia.nome)
                             : "—"}
@@ -371,7 +359,7 @@ export default async function DashboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-0.5">
                         <MapPin className="h-3 w-3 text-gray-400 shrink-0" />
-                        <p className="text-sm font-medium text-gray-800 group-hover:text-[#0f4c75] truncate transition-colors">
+                        <p className="text-sm font-medium text-gray-800 group-hover:text-[var(--primary)] truncate transition-colors">
                           {plant.indirizzo}
                         </p>
                       </div>
@@ -379,7 +367,7 @@ export default async function DashboardPage() {
                         {plant.citta}{" "}
                         <span className="text-gray-400">({plant.provincia})</span>
                         {plant.compagnia && (
-                          <span className="ml-1 text-[#0f4c75] font-medium">
+                          <span className="ml-1 text-[var(--primary)] font-medium">
                             · {plant.compagnia.nome}
                           </span>
                         )}
