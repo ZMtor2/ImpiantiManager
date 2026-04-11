@@ -1,24 +1,28 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { CheckCircle2, Save } from "lucide-react"
+import {
+  CheckCircle2, ChevronRight, ChevronLeft,
+  Save, Loader2, Plus, Trash2, Search, X, User
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
+import { tipoApparecchioLabel, tipoDispositivoLabel } from "@/lib/labels"
 
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface Compagnia { id: string; nome: string }
+interface Anagrafica { id: string; ragioneSociale: string }
+interface PlantWizardProps { compagnie: Compagnia[] }
 
-interface PlantWizardProps {
-  compagnie: Compagnia[]
-}
-
+// ─── Schemas ──────────────────────────────────────────────────────────────────
 const Step1Schema = z.object({
   indirizzo: z.string().min(1, "Indirizzo richiesto"),
   citta: z.string().min(1, "Città richiesta"),
@@ -34,43 +38,184 @@ const Step1Schema = z.object({
   codiceImpiantoCompagnia: z.string().optional(),
   ispettoreZona: z.string().optional(),
 })
-
 type Step1Data = z.infer<typeof Step1Schema>
 
-const TIPI_IMPIANTO = [
-  { value: "STRADALE", label: "Stradale" },
-  { value: "AUTOSTRADALE", label: "Autostradale" },
-  { value: "PRIVATO", label: "Privato" },
-  { value: "INDUSTRIALE", label: "Industriale" },
-  { value: "NAUTICO", label: "Nautico" },
-  { value: "AEROPORTUALE", label: "Aeroportuale" },
+const ApparecchiaturaSchema = z.object({
+  tipo: z.string().min(1),
+  marca: z.string().optional().nullable(),
+  modello: z.string().optional().nullable(),
+  matricola: z.string().optional().nullable(),
+  posizione: z.string().optional().nullable(),
+  stato: z.string().default("FUNZIONANTE"),
+  note: z.string().optional().nullable(),
+})
+type ApparecchiaturaData = z.infer<typeof ApparecchiaturaSchema>
+
+const ReteSchema = z.object({
+  etichetta: z.string().min(1, "Etichetta richiesta"),
+  tipoDispositivo: z.string().min(1),
+  indirizzoIp: z.string().min(1, "IP richiesto").regex(/^(\d{1,3}\.){3}\d{1,3}$/, "Formato IP non valido"),
+  macAddress: z.string().optional().nullable(),
+  note: z.string().optional().nullable(),
+})
+type ReteData = z.infer<typeof ReteSchema>
+
+// ─── Step indicator ────────────────────────────────────────────────────────────
+const STEPS = [
+  { n: 1, label: "Dati base" },
+  { n: 2, label: "Proprietario / Gestore" },
+  { n: 3, label: "Apparecchiature" },
+  { n: 4, label: "Rete" },
 ]
 
-const STATI = [
-  { value: "ATTIVO", label: "Attivo" },
-  { value: "INATTIVO", label: "Inattivo" },
-  { value: "DISMESSO", label: "Dismesso" },
-]
+function StepIndicator({ current, maxReached }: { current: number; maxReached: number }) {
+  return (
+    <div className="flex items-center gap-0 overflow-x-auto pb-1">
+      {STEPS.map((s, i) => {
+        const done = s.n < current
+        const active = s.n === current
+        const reachable = s.n <= maxReached
+        return (
+          <div key={s.n} className="flex items-center shrink-0">
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              active
+                ? "bg-[var(--primary)] text-white"
+                : done
+                ? "bg-green-900/40 text-green-400"
+                : reachable
+                ? "bg-[var(--muted)] text-[var(--muted-foreground)]"
+                : "bg-[var(--muted)]/50 text-[var(--muted-foreground)]/50"
+            }`}>
+              {done
+                ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                : <span className="text-xs w-3.5 text-center">{s.n}</span>
+              }
+              <span className="hidden sm:inline">{s.label}</span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div className={`w-6 h-px mx-1 ${s.n < current ? "bg-green-700" : "bg-[var(--border)]"}`} />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
+// ─── Anagrafica search ─────────────────────────────────────────────────────────
+function AnagraficaSearch({
+  label, value, onChange,
+}: { label: string; value: Anagrafica | null; onChange: (a: Anagrafica | null) => void }) {
+  const [q, setQ] = useState("")
+  const [results, setResults] = useState<Anagrafica[]>([])
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const search = useCallback((query: string) => {
+    setQ(query)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!query.trim()) { setResults([]); setOpen(false); return }
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/anagrafica/search?q=${encodeURIComponent(query)}`)
+        if (res.ok) { setResults(await res.json()); setOpen(true) }
+      } finally { setLoading(false) }
+    }, 300)
+  }, [])
+
+  if (value) {
+    return (
+      <div className="flex items-center gap-2 p-2.5 border border-[var(--border)] rounded-md bg-[var(--secondary)]">
+        <User className="h-4 w-4 text-[var(--primary)] shrink-0" />
+        <span className="text-sm font-medium flex-1">{value.ragioneSociale}</span>
+        <button type="button" onClick={() => onChange(null)} className="text-[var(--muted-foreground)] hover:text-destructive">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[var(--muted-foreground)]" />
+        <Input
+          placeholder={`Cerca ${label}...`}
+          value={q}
+          onChange={e => search(e.target.value)}
+          className="pl-8"
+        />
+        {loading && <Loader2 className="absolute right-2.5 top-2.5 h-4 w-4 animate-spin text-[var(--muted-foreground)]" />}
+      </div>
+      {open && results.length > 0 && (
+        <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-[var(--card)] border border-[var(--border)] rounded-md shadow-lg max-h-48 overflow-y-auto">
+          {results.map(r => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => { onChange(r); setQ(""); setOpen(false) }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--secondary)] transition-colors"
+            >
+              {r.ragioneSociale}
+            </button>
+          ))}
+        </div>
+      )}
+      {open && results.length === 0 && !loading && (
+        <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-[var(--card)] border border-[var(--border)] rounded-md shadow-lg px-3 py-2 text-sm text-[var(--muted-foreground)]">
+          Nessun risultato — <a href="/clienti/nuovo" target="_blank" className="text-[var(--primary)] underline">Crea nuovo cliente</a>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Main wizard ───────────────────────────────────────────────────────────────
 export function PlantWizard({ compagnie }: PlantWizardProps) {
   const router = useRouter()
+  const [step, setStep] = useState(1)
+  const [maxReached, setMaxReached] = useState(1)
+  const [plantId, setPlantId] = useState<string | null>(null)
+  // Full plant data from step 1 response — needed to re-send required fields in step 2 PUT
+  const [plantBase, setPlantBase] = useState<Record<string, unknown> | null>(null)
   const [saving, setSaving] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<Step1Data>({
+  // Step 2 state
+  const [proprietario, setProprietario] = useState<Anagrafica | null>(null)
+  const [gestore, setGestore] = useState<Anagrafica | null>(null)
+  const [clienteManutenzione, setClienteManutenzione] = useState("")
+
+  // Step 3 state
+  const [apparecchiature, setApparecchiature] = useState<{ id: string; tipo: string; marca: string | null; modello: string | null; matricola: string | null; posizione: string | null; stato: string }[]>([])
+  const [addingEq, setAddingEq] = useState(false)
+  const [deletingEqId, setDeletingEqId] = useState<string | null>(null)
+
+  // Step 4 state
+  const [devices, setDevices] = useState<{ id: string; etichetta: string; tipoDispositivo: string; indirizzoIp: string; macAddress: string | null }[]>([])
+  const [addingDev, setAddingDev] = useState(false)
+  const [deletingDevId, setDeletingDevId] = useState<string | null>(null)
+
+  // ── Step 1 form ──────────────────────────────────────────────────────────────
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Step1Data>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(Step1Schema) as any,
     defaultValues: { tipoImpianto: "STRADALE", stato: "ATTIVO" },
   })
-
   const compagniaId = watch("compagniaId")
 
-  const createPlant = useCallback(async (data: Step1Data) => {
+  const goTo = (n: number) => {
+    if (n <= maxReached) { setStep(n) }
+  }
+
+  const advanceTo = (n: number) => {
+    setStep(n)
+    if (n > maxReached) setMaxReached(n)
+  }
+
+  // Step 1 → create plant
+  const submitStep1 = handleSubmit(async (data: Step1Data) => {
     setSaving(true)
     try {
       const res = await fetch("/api/impianti", {
@@ -83,126 +228,446 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        if (res.status === 409) {
-          toast.error("Codice impianto già esistente")
-          return null
-        }
-        toast.error(err.error ?? "Errore durante la creazione")
-        return null
+        if (res.status === 409) { toast.error("Codice impianto già esistente"); return }
+        toast.error(typeof err.error === "string" ? err.error : "Errore durante la creazione")
+        return
       }
       const plant = await res.json()
-      return plant.id as string
+      setPlantId(plant.id)
+      setPlantBase(plant)
+      toast.success("Impianto creato")
+      advanceTo(2)
+    } catch {
+      toast.error("Errore di rete")
     } finally {
       setSaving(false)
     }
-  }, [])
+  })
 
-  const createAndRedirect = handleSubmit(async (data: Step1Data) => {
-    const id = await createPlant(data)
-    if (id) {
-      toast.success("Impianto creato! Completa la scheda con i pulsanti Modifica.")
-      router.push(`/impianti/${id}/modifica`)
+  // Step 2 → save proprietario/gestore (merged with stored plant base data)
+  const submitStep2 = async (skip = false) => {
+    if (!plantId) return
+    if (skip) { advanceTo(3); return }
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/impianti/${plantId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...plantBase,
+          proprietarioId: proprietario?.id ?? null,
+          gestoreId: gestore?.id ?? null,
+          clienteManutenzione: clienteManutenzione || null,
+        }),
+      })
+      if (res.ok) {
+        toast.success("Dati salvati")
+        advanceTo(3)
+      } else {
+        toast.error("Errore durante il salvataggio")
+      }
+    } catch {
+      toast.error("Errore di rete")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Step 3 — apparecchiature
+  const eqForm = useForm<ApparecchiaturaData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(ApparecchiaturaSchema) as any,
+    defaultValues: { tipo: "EROGATORE", stato: "FUNZIONANTE" },
+  })
+
+  const addApparecchiatura = eqForm.handleSubmit(async (data: ApparecchiaturaData) => {
+    if (!plantId) return
+    setAddingEq(true)
+    try {
+      const res = await fetch(`/api/impianti/${plantId}/apparecchiature`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      if (res.ok) {
+        const eq = await res.json()
+        setApparecchiature(prev => [...prev, eq])
+        eqForm.reset({ tipo: "EROGATORE", stato: "FUNZIONANTE" })
+        toast.success("Apparecchiatura aggiunta")
+      } else {
+        toast.error("Errore durante l'aggiunta")
+      }
+    } catch {
+      toast.error("Errore di rete")
+    } finally {
+      setAddingEq(false)
     }
   })
 
+  const deleteApparecchiatura = async (id: string) => {
+    if (!confirm("Eliminare questa apparecchiatura?")) return
+    setDeletingEqId(id)
+    try {
+      const res = await fetch(`/api/apparecchiature/${id}`, { method: "DELETE" })
+      if (res.ok) {
+        setApparecchiature(prev => prev.filter(e => e.id !== id))
+        toast.success("Eliminata")
+      } else { toast.error("Errore durante l'eliminazione") }
+    } finally { setDeletingEqId(null) }
+  }
+
+  // Step 4 — rete
+  const reteForm = useForm<ReteData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(ReteSchema) as any,
+    defaultValues: { tipoDispositivo: "PC" },
+  })
+
+  const addDevice = reteForm.handleSubmit(async (data: ReteData) => {
+    if (!plantId) return
+    setAddingDev(true)
+    try {
+      const res = await fetch(`/api/impianti/${plantId}/network`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      if (res.ok) {
+        const dev = await res.json()
+        setDevices(prev => [...prev, dev])
+        reteForm.reset({ tipoDispositivo: "PC" })
+        toast.success("Dispositivo aggiunto")
+      } else {
+        toast.error("Errore durante l'aggiunta")
+      }
+    } catch {
+      toast.error("Errore di rete")
+    } finally {
+      setAddingDev(false)
+    }
+  })
+
+  const deleteDevice = async (id: string) => {
+    if (!confirm("Eliminare questo dispositivo?")) return
+    setDeletingDevId(id)
+    try {
+      const res = await fetch(`/api/network/${id}`, { method: "DELETE" })
+      if (res.ok) {
+        setDevices(prev => prev.filter(d => d.id !== id))
+        toast.success("Eliminato")
+      } else { toast.error("Errore durante l'eliminazione") }
+    } finally { setDeletingDevId(null) }
+  }
+
+  // ─── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
-      <form onSubmit={createAndRedirect} className="space-y-5">
-        <div className="bg-[var(--card)] border border-border rounded-lg p-5 space-y-4">
-          <h2 className="font-semibold text-[var(--primary)]">Dati identificativi</h2>
-          <p className="text-xs text-muted-foreground">I campi con * sono obbligatori. Dopo la creazione potrai aggiungere proprietario, apparecchiature e rete.</p>
+      {/* Step indicator — clickable after unlocking */}
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
+        <div className="flex items-center justify-between gap-4">
+          <StepIndicator current={step} maxReached={maxReached} />
+          {plantId && (
+            <a
+              href={`/impianti/${plantId}`}
+              className="text-xs text-[var(--muted-foreground)] hover:text-[var(--primary)] whitespace-nowrap underline underline-offset-2"
+            >
+              Vai alla scheda
+            </a>
+          )}
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
-              <Label htmlFor="indirizzo">Indirizzo *</Label>
-              <Input id="indirizzo" placeholder="Via Roma 1" {...register("indirizzo")} className="mt-1" />
-              {errors.indirizzo && <p className="text-xs text-destructive mt-1">{errors.indirizzo.message}</p>}
+      {/* ── Step 1: Dati base ──────────────────────────────────────────────── */}
+      {step === 1 && (
+        <form onSubmit={submitStep1} className="space-y-5">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 space-y-4">
+            <h2 className="font-semibold text-[var(--primary)]">Dati identificativi</h2>
+            <p className="text-xs text-[var(--muted-foreground)]">I campi con * sono obbligatori.</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <Label htmlFor="indirizzo">Indirizzo *</Label>
+                <Input id="indirizzo" placeholder="Via Roma 1" {...register("indirizzo")} className="mt-1" />
+                {errors.indirizzo && <p className="text-xs text-destructive mt-1">{errors.indirizzo.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="citta">Città *</Label>
+                <Input id="citta" placeholder="Milano" {...register("citta")} className="mt-1" />
+                {errors.citta && <p className="text-xs text-destructive mt-1">{errors.citta.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="compagniaId">Bandiera / Compagnia *</Label>
+                <Select onValueChange={v => setValue("compagniaId", v)} value={compagniaId}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Seleziona compagnia..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {compagnie.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {errors.compagniaId && <p className="text-xs text-destructive mt-1">{errors.compagniaId.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="provincia">Provincia</Label>
+                <Input id="provincia" placeholder="MI" maxLength={2} {...register("provincia")} className="mt-1 uppercase" />
+              </div>
+              <div>
+                <Label htmlFor="cap">CAP</Label>
+                <Input id="cap" placeholder="20100" maxLength={5} {...register("cap")} className="mt-1" />
+              </div>
+              <div>
+                <Label>Tipo impianto</Label>
+                <Select onValueChange={v => setValue("tipoImpianto", v)} defaultValue="STRADALE">
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["STRADALE","AUTOSTRADALE","PRIVATO","INDUSTRIALE","NAUTICO","AEROPORTUALE"].map(t => (
+                      <SelectItem key={t} value={t}>{t.charAt(0)+t.slice(1).toLowerCase().replace("_"," ")}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Stato</Label>
+                <Select onValueChange={v => setValue("stato", v)} defaultValue="ATTIVO">
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ATTIVO">Attivo</SelectItem>
+                    <SelectItem value="INATTIVO">Inattivo</SelectItem>
+                    <SelectItem value="DISMESSO">Dismesso</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="citta">Città *</Label>
-              <Input id="citta" placeholder="Milano" {...register("citta")} className="mt-1" />
-              {errors.citta && <p className="text-xs text-destructive mt-1">{errors.citta.message}</p>}
-            </div>
+            <Separator />
+            <h3 className="text-sm font-medium text-[var(--muted-foreground)]">Dati opzionali</h3>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div><Label>Codice interno</Label><Input placeholder="IMP0001" {...register("codice")} className="mt-1" /></div>
+              <div><Label>Alias</Label><Input placeholder="Ex-Agip angolo semaforo" {...register("alias")} className="mt-1" /></div>
+              <div><Label>Codice impianto compagnia</Label><Input {...register("codiceImpiantoCompagnia")} className="mt-1" /></div>
+              <div><Label>Ispettore di zona</Label><Input {...register("ispettoreZona")} className="mt-1" /></div>
+              <div><Label>N° autorizzazione</Label><Input {...register("numeroAutorizzazione")} className="mt-1" /></div>
+              <div><Label>Data apertura</Label><Input type="date" {...register("dataApertura")} className="mt-1" /></div>
+            </div>
+          </div>
+
+          <div className="flex justify-between gap-3">
+            <Button type="button" variant="outline" onClick={() => router.push("/impianti")}>Annulla</Button>
+            <Button type="submit" disabled={saving}>
+              {saving
+                ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Creazione...</>
+                : <>Crea impianto <ChevronRight className="h-4 w-4 ml-1" /></>}
+            </Button>
+          </div>
+        </form>
+      )}
+
+      {/* ── Step 2: Proprietario / Gestore ────────────────────────────────── */}
+      {step === 2 && (
+        <div className="space-y-5">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 space-y-5">
             <div>
-              <Label htmlFor="compagniaId">Bandiera / Compagnia *</Label>
-              <Select onValueChange={(v) => setValue("compagniaId", v)} value={compagniaId}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Seleziona compagnia..." />
-                </SelectTrigger>
+              <h2 className="font-semibold text-[var(--primary)] mb-1">Proprietario</h2>
+              <p className="text-xs text-[var(--muted-foreground)] mb-3">Cerca per ragione sociale tra i clienti registrati.</p>
+              <AnagraficaSearch label="proprietario" value={proprietario} onChange={setProprietario} />
+            </div>
+            <Separator />
+            <div>
+              <h2 className="font-semibold text-[var(--primary)] mb-1">Gestore</h2>
+              <p className="text-xs text-[var(--muted-foreground)] mb-3">Lascia vuoto se coincide con il proprietario.</p>
+              <AnagraficaSearch label="gestore" value={gestore} onChange={setGestore} />
+            </div>
+            <Separator />
+            <div>
+              <Label>Referente per la manutenzione</Label>
+              <Select value={clienteManutenzione} onValueChange={setClienteManutenzione}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Nessuno specificato" /></SelectTrigger>
                 <SelectContent>
-                  {compagnie.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                  ))}
+                  <SelectItem value="">Nessuno specificato</SelectItem>
+                  <SelectItem value="PROPRIETARIO">Proprietario</SelectItem>
+                  <SelectItem value="GESTORE">Gestore</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.compagniaId && <p className="text-xs text-destructive mt-1">{errors.compagniaId.message}</p>}
-            </div>
-
-            <div>
-              <Label htmlFor="provincia">Provincia</Label>
-              <Input id="provincia" placeholder="MI" maxLength={2} {...register("provincia")} className="mt-1 uppercase" />
-            </div>
-
-            <div>
-              <Label htmlFor="cap">CAP</Label>
-              <Input id="cap" placeholder="20100" maxLength={5} {...register("cap")} className="mt-1" />
             </div>
           </div>
 
-          <Separator />
-          <h3 className="text-sm font-medium text-muted-foreground">Dati opzionali</h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="codice">Codice interno</Label>
-              <Input id="codice" placeholder="IMP0001" {...register("codice")} className="mt-1" />
-            </div>
-            <div>
-              <Label htmlFor="alias">Alias</Label>
-              <Input id="alias" placeholder="Ex-Agip angolo semaforo" {...register("alias")} className="mt-1" />
-            </div>
-            <div>
-              <Label htmlFor="tipoImpianto">Tipo impianto</Label>
-              <Select onValueChange={(v) => setValue("tipoImpianto", v)} defaultValue="STRADALE">
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>{TIPI_IMPIANTO.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="stato">Stato</Label>
-              <Select onValueChange={(v) => setValue("stato", v)} defaultValue="ATTIVO">
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>{STATI.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="codiceImpiantoCompagnia">Codice impianto compagnia</Label>
-              <Input id="codiceImpiantoCompagnia" {...register("codiceImpiantoCompagnia")} className="mt-1" />
-            </div>
-            <div>
-              <Label htmlFor="ispettoreZona">Ispettore di zona</Label>
-              <Input id="ispettoreZona" {...register("ispettoreZona")} className="mt-1" />
-            </div>
-            <div>
-              <Label htmlFor="numeroAutorizzazione">N° autorizzazione</Label>
-              <Input id="numeroAutorizzazione" {...register("numeroAutorizzazione")} className="mt-1" />
-            </div>
-            <div>
-              <Label htmlFor="dataApertura">Data apertura</Label>
-              <Input id="dataApertura" type="date" {...register("dataApertura")} className="mt-1" />
+          <div className="flex justify-between gap-3">
+            <Button type="button" variant="outline" onClick={() => goTo(1)}>
+              <ChevronLeft className="h-4 w-4 mr-1" />Indietro
+            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="ghost" onClick={() => submitStep2(true)}>
+                Salta
+              </Button>
+              <Button type="button" onClick={() => submitStep2(false)} disabled={saving}>
+                {saving
+                  ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Salvataggio...</>
+                  : <><Save className="h-4 w-4 mr-1" />Salva e avanti</>}
+              </Button>
             </div>
           </div>
         </div>
+      )}
 
-        <div className="flex justify-between gap-3">
-          <Button type="button" variant="outline" onClick={() => router.push("/impianti")}>Annulla</Button>
-          <Button type="submit" disabled={saving}>
-            {saving ? <><Save className="h-4 w-4 mr-1 animate-spin" />Creazione...</> : <><CheckCircle2 className="h-4 w-4 mr-1" />Crea impianto</>}
-          </Button>
+      {/* ── Step 3: Apparecchiature ────────────────────────────────────────── */}
+      {step === 3 && (
+        <div className="space-y-5">
+          {/* Existing list */}
+          {apparecchiature.length > 0 && (
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg divide-y divide-[var(--border)]">
+              {apparecchiature.map(eq => (
+                <div key={eq.id} className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{tipoApparecchioLabel[eq.tipo] ?? eq.tipo}</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      {[eq.marca, eq.modello, eq.matricola, eq.posizione].filter(Boolean).join(" · ") || "—"}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost" size="sm"
+                    className="text-destructive hover:bg-destructive hover:text-white shrink-0"
+                    onClick={() => deleteApparecchiatura(eq.id)}
+                    disabled={deletingEqId === eq.id}
+                  >
+                    {deletingEqId === eq.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add form */}
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 space-y-4">
+            <h2 className="font-semibold text-[var(--primary)] flex items-center gap-2">
+              <Plus className="h-4 w-4" />Aggiungi apparecchiatura
+            </h2>
+            <form onSubmit={addApparecchiatura} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Tipo *</Label>
+                  <Select onValueChange={v => eqForm.setValue("tipo", v)} defaultValue="EROGATORE">
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(tipoApparecchioLabel).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Stato</Label>
+                  <Select onValueChange={v => eqForm.setValue("stato", v)} defaultValue="FUNZIONANTE">
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FUNZIONANTE">Funzionante</SelectItem>
+                      <SelectItem value="GUASTO">Guasto</SelectItem>
+                      <SelectItem value="IN_MANUTENZIONE">In manutenzione</SelectItem>
+                      <SelectItem value="DISMESSO">Dismesso</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Marca</Label><Input {...eqForm.register("marca")} className="mt-1" placeholder="es. Gilbarco" /></div>
+                <div><Label>Modello</Label><Input {...eqForm.register("modello")} className="mt-1" placeholder="es. Encore 700S" /></div>
+                <div><Label>Matricola</Label><Input {...eqForm.register("matricola")} className="mt-1" /></div>
+                <div><Label>Posizione</Label><Input {...eqForm.register("posizione")} className="mt-1" placeholder="es. Isola 1 lato A" /></div>
+                <div className="sm:col-span-2"><Label>Note</Label><Input {...eqForm.register("note")} className="mt-1" /></div>
+              </div>
+              <div className="flex justify-end">
+                <Button type="submit" variant="outline" disabled={addingEq}>
+                  {addingEq ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Aggiunta...</> : <><Plus className="h-4 w-4 mr-1" />Aggiungi</>}
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          <div className="flex justify-between gap-3">
+            <Button type="button" variant="outline" onClick={() => goTo(2)}>
+              <ChevronLeft className="h-4 w-4 mr-1" />Indietro
+            </Button>
+            <Button type="button" onClick={() => advanceTo(4)}>
+              {apparecchiature.length > 0 ? "Avanti" : "Salta"} <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         </div>
-      </form>
+      )}
+
+      {/* ── Step 4: Rete ──────────────────────────────────────────────────── */}
+      {step === 4 && (
+        <div className="space-y-5">
+          {/* Existing list */}
+          {devices.length > 0 && (
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg divide-y divide-[var(--border)]">
+              {devices.map(dev => (
+                <div key={dev.id} className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{dev.etichetta}</p>
+                    <p className="text-xs text-[var(--muted-foreground)] font-mono">
+                      {tipoDispositivoLabel[dev.tipoDispositivo] ?? dev.tipoDispositivo} · {dev.indirizzoIp}
+                      {dev.macAddress ? ` · ${dev.macAddress}` : ""}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost" size="sm"
+                    className="text-destructive hover:bg-destructive hover:text-white shrink-0"
+                    onClick={() => deleteDevice(dev.id)}
+                    disabled={deletingDevId === dev.id}
+                  >
+                    {deletingDevId === dev.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add form */}
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 space-y-4">
+            <h2 className="font-semibold text-[var(--primary)] flex items-center gap-2">
+              <Plus className="h-4 w-4" />Aggiungi dispositivo di rete
+            </h2>
+            <form onSubmit={addDevice} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Etichetta *</Label>
+                  <Input {...reteForm.register("etichetta")} className="mt-1" placeholder="es. Router principale" />
+                  {reteForm.formState.errors.etichetta && <p className="text-xs text-destructive mt-1">{reteForm.formState.errors.etichetta.message}</p>}
+                </div>
+                <div>
+                  <Label>Tipo dispositivo</Label>
+                  <Select onValueChange={v => reteForm.setValue("tipoDispositivo", v)} defaultValue="PC">
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(tipoDispositivoLabel).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Indirizzo IP *</Label>
+                  <Input {...reteForm.register("indirizzoIp")} className="mt-1 font-mono" placeholder="192.168.1.1" />
+                  {reteForm.formState.errors.indirizzoIp && <p className="text-xs text-destructive mt-1">{reteForm.formState.errors.indirizzoIp.message}</p>}
+                </div>
+                <div>
+                  <Label>MAC Address</Label>
+                  <Input {...reteForm.register("macAddress")} className="mt-1 font-mono" placeholder="AA:BB:CC:DD:EE:FF" />
+                </div>
+                <div className="sm:col-span-2"><Label>Note</Label><Input {...reteForm.register("note")} className="mt-1" /></div>
+              </div>
+              <div className="flex justify-end">
+                <Button type="submit" variant="outline" disabled={addingDev}>
+                  {addingDev ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Aggiunta...</> : <><Plus className="h-4 w-4 mr-1" />Aggiungi</>}
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          <div className="flex justify-between gap-3">
+            <Button type="button" variant="outline" onClick={() => goTo(3)}>
+              <ChevronLeft className="h-4 w-4 mr-1" />Indietro
+            </Button>
+            <Button type="button" onClick={() => plantId && router.push(`/impianti/${plantId}`)}>
+              <CheckCircle2 className="h-4 w-4 mr-1" />Vai alla scheda impianto
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
