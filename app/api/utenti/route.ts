@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/session";
 
 const UserCreateSchema = z.object({
   nome: z.string().min(1, "Nome richiesto"),
-  cognome: z.string().min(1, "Cognome richiesto"),
+  cognome: z.string().default(""),
   email: z.string().email("Email non valida"),
   ruolo: z.enum(["ADMIN", "TECNICO", "VIEWER"]).default("TECNICO"),
   password: z.string().min(6, "Password minima 6 caratteri"),

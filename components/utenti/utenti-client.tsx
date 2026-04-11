@@ -41,11 +41,18 @@ export function UtentiClient({ utenti: initial, currentUserId }: UtentiClientPro
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nome: newNome, cognome: newCognome, email: newEmail, password: newPassword, ruolo: newRuolo }),
       })
-      if (!res.ok) { const e = await res.json().catch(() => ({})); toast.error(e.error ?? "Errore"); return }
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}))
+        const msg = typeof e.error === "string" ? e.error : (e.error?.message ?? "Errore durante la creazione")
+        toast.error(msg)
+        return
+      }
       const created = await res.json()
-      setUtenti(prev => [...prev, created])
+      setUtenti(prev => [...prev, { ultimoAccesso: null, ...created }])
       setShowAdd(false); setNewNome(""); setNewCognome(""); setNewEmail(""); setNewPassword(""); setNewRuolo("TECNICO")
       toast.success("Utente creato")
+    } catch {
+      toast.error("Errore di rete durante la creazione")
     } finally { setSaving(false) }
   }
 
@@ -80,7 +87,9 @@ export function UtentiClient({ utenti: initial, currentUserId }: UtentiClientPro
     try {
       const res = await fetch(`/api/utenti/${showReset.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: resetPassword }) })
       if (res.ok) { toast.success("Password reimpostata"); setShowReset(null); setResetPassword("") }
-      else toast.error("Errore")
+      else toast.error("Errore durante il reset della password")
+    } catch {
+      toast.error("Errore di rete")
     } finally { setSaving(false) }
   }
 

@@ -69,13 +69,15 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        toast.error(err.error ?? "Errore durante il salvataggio")
+        const msg = typeof err.error === "string" ? err.error : "Errore durante il salvataggio"
+        toast.error(msg)
         return
       }
       const data = await res.json()
       toast.success(initialData ? "Cliente aggiornato" : "Cliente creato")
       router.push(`/clienti/${data.id}`)
-      router.refresh()
+    } catch {
+      toast.error("Errore di rete durante il salvataggio")
     } finally {
       setSaving(false)
     }
