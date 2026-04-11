@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Plus, Trash2, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,7 +19,6 @@ interface UtentiClientProps { utenti: Utente[]; currentUserId: string }
 const RUOLI = [{ value: "ADMIN", label: "Admin" }, { value: "TECNICO", label: "Tecnico" }, { value: "VIEWER", label: "Viewer" }]
 
 export function UtentiClient({ utenti: initial, currentUserId }: UtentiClientProps) {
-  const router = useRouter()
   const [utenti, setUtenti] = useState(initial)
   const [showAdd, setShowAdd] = useState(false)
   const [showReset, setShowReset] = useState<Utente | null>(null)

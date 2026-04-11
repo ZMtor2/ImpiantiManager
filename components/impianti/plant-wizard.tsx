@@ -27,7 +27,7 @@ const Step1Schema = z.object({
   indirizzo: z.string().min(1, "Indirizzo richiesto"),
   citta: z.string().min(1, "Città richiesta"),
   compagniaId: z.string().min(1, "Compagnia richiesta"),
-  provincia: z.string().optional(),
+  provincia: z.string().length(2, "Inserire sigla provincia (2 lettere)"),
   cap: z.string().optional(),
   codice: z.string().optional(),
   alias: z.string().optional(),
@@ -408,8 +408,9 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
                 {errors.compagniaId && <p className="text-xs text-destructive mt-1">{errors.compagniaId.message}</p>}
               </div>
               <div>
-                <Label htmlFor="provincia">Provincia</Label>
+                <Label htmlFor="provincia">Provincia *</Label>
                 <Input id="provincia" placeholder="MI" maxLength={2} {...register("provincia")} className="mt-1 uppercase" />
+                {errors.provincia && <p className="text-xs text-destructive mt-1">{errors.provincia.message}</p>}
               </div>
               <div>
                 <Label htmlFor="cap">CAP</Label>
