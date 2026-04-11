@@ -199,7 +199,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
 
   // ── Step 1 form ──────────────────────────────────────────────────────────────
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Step1Data>({
-    resolver: zodResolver(Step1Schema),
+    resolver: zodResolver(Step1Schema) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
     defaultValues: { tipoImpianto: "STRADALE", stato: "ATTIVO" },
   })
   const compagniaId = watch("compagniaId")
@@ -274,7 +274,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
 
   // Step 3 — apparecchiature
   const eqForm = useForm<ApparecchiaturaData>({
-    resolver: zodResolver(ApparecchiaturaSchema),
+    resolver: zodResolver(ApparecchiaturaSchema) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
     defaultValues: { tipo: "EROGATORE", stato: "FUNZIONANTE" },
   })
 
@@ -316,7 +316,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
 
   // Step 4 — rete
   const reteForm = useForm<ReteData>({
-    resolver: zodResolver(ReteSchema),
+    resolver: zodResolver(ReteSchema) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
     defaultValues: { tipoDispositivo: "PC" },
   })
 
