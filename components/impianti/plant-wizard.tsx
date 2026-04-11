@@ -27,7 +27,7 @@ const Step1Schema = z.object({
   indirizzo: z.string().min(1, "Indirizzo richiesto"),
   citta: z.string().min(1, "Città richiesta"),
   compagniaId: z.string().min(1, "Compagnia richiesta"),
-  provincia: z.string().length(2, "Inserire sigla provincia (2 lettere)"),
+  provincia: z.string().length(2, "Inserire sigla provincia (2 lettere)").transform(v => v.toUpperCase()),
   cap: z.string().optional(),
   codice: z.string().optional(),
   alias: z.string().optional(),
@@ -199,8 +199,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
 
   // ── Step 1 form ──────────────────────────────────────────────────────────────
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Step1Data>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(Step1Schema) as any,
+    resolver: zodResolver(Step1Schema),
     defaultValues: { tipoImpianto: "STRADALE", stato: "ATTIVO" },
   })
   const compagniaId = watch("compagniaId")
@@ -275,8 +274,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
 
   // Step 3 — apparecchiature
   const eqForm = useForm<ApparecchiaturaData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(ApparecchiaturaSchema) as any,
+    resolver: zodResolver(ApparecchiaturaSchema),
     defaultValues: { tipo: "EROGATORE", stato: "FUNZIONANTE" },
   })
 
@@ -318,8 +316,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
 
   // Step 4 — rete
   const reteForm = useForm<ReteData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(ReteSchema) as any,
+    resolver: zodResolver(ReteSchema),
     defaultValues: { tipoDispositivo: "PC" },
   })
 
@@ -409,7 +406,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
               </div>
               <div>
                 <Label htmlFor="provincia">Provincia *</Label>
-                <Input id="provincia" placeholder="MI" maxLength={2} {...register("provincia")} className="mt-1 uppercase" />
+                <Input id="provincia" placeholder="MI" minLength={2} maxLength={2} {...register("provincia")} className="mt-1 uppercase" />
                 {errors.provincia && <p className="text-xs text-destructive mt-1">{errors.provincia.message}</p>}
               </div>
               <div>

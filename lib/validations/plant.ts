@@ -5,7 +5,7 @@ export const PlantSchema = z.object({
   alias: z.string().optional().nullable(),
   indirizzo: z.string().min(1, "Indirizzo richiesto"),
   citta: z.string().min(1, "Città richiesta"),
-  provincia: z.string().length(2, "Inserire codice provincia di 2 lettere"),
+  provincia: z.string().length(2, "Inserire sigla provincia (2 lettere)").transform(v => v.toUpperCase()),
   cap: z.string().optional().nullable(),
   compagniaId: z.string().min(1, "Compagnia richiesta"),
   codiceImpiantoCompagnia: z.string().optional().nullable(),
