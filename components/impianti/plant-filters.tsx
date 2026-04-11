@@ -18,9 +18,9 @@ const STATI = ["ATTIVO", "INATTIVO", "DISMESSO"]
 const TIPI = ["STRADALE", "AUTOSTRADALE", "PRIVATO", "INDUSTRIALE", "NAUTICO", "AEROPORTUALE"]
 
 const statoColor: Record<string, string> = {
-  ATTIVO: "bg-green-100 text-green-800 border-green-200",
-  INATTIVO: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  DISMESSO: "bg-gray-100 text-gray-600 border-gray-200",
+  ATTIVO: "bg-green-900/40 text-green-400 border-green-800",
+  INATTIVO: "bg-yellow-900/40 text-yellow-400 border-yellow-800",
+  DISMESSO: "bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]",
 }
 
 export function PlantFilters({ compagnie }: PlantFiltersProps) {

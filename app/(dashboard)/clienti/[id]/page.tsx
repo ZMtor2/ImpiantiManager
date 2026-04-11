@@ -38,7 +38,7 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
   if (!cliente) notFound()
 
   const statoColor: Record<string, string> = {
-    ATTIVO: "bg-green-100 text-green-800", INATTIVO: "bg-yellow-100 text-yellow-800", DISMESSO: "bg-gray-100 text-gray-600",
+    ATTIVO: "bg-green-900/40 text-green-400", INATTIVO: "bg-yellow-900/40 text-yellow-400", DISMESSO: "bg-[var(--muted)] text-[var(--muted-foreground)]",
   }
 
   return (
