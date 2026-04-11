@@ -13,11 +13,11 @@ export const AnagraficaSchema = z.object({
   ragioneSociale: z.string().min(1, "Ragione sociale richiesta"),
   partitaIva: z.string().optional().nullable(),
   codiceFiscale: z.string().optional().nullable(),
-  indirizzo: z.string().optional(),
-  citta: z.string().optional(),
-  provincia: z.string().optional(),
-  cap: z.string().optional(),
-  note: z.string().optional(),
+  indirizzo: z.string().optional().nullable(),
+  citta: z.string().optional().nullable(),
+  provincia: z.string().optional().nullable(),
+  cap: z.string().optional().nullable(),
+  note: z.string().optional().nullable(),
   contatti: z.array(AnagraficaContactSchema).default([]),
 });
 
