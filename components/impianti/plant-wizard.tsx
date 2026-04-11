@@ -165,7 +165,7 @@ function AnagraficaSearch({
       )}
       {open && results.length === 0 && !loading && (
         <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-[var(--card)] border border-[var(--border)] rounded-md shadow-lg px-3 py-2 text-sm text-[var(--muted-foreground)]">
-          Nessun risultato — <a href="/clienti/nuovo" target="_blank" className="text-[var(--primary)] underline">Crea nuovo cliente</a>
+          Nessun risultato
         </div>
       )}
     </div>
