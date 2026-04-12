@@ -88,7 +88,7 @@ function AnagraficaSearch({
       <div className="flex items-center gap-2 p-2.5 border border-[var(--border)] rounded-md bg-[var(--secondary)]">
         <User className="h-4 w-4 text-[var(--primary)] shrink-0" />
         <span className="text-sm font-medium flex-1">{value.ragioneSociale}</span>
-        <button onClick={() => onChange(null)} className="text-[var(--muted-foreground)] hover:text-[var(--destructive)]">
+        <button type="button" onClick={() => onChange(null)} className="text-[var(--muted-foreground)] hover:text-[var(--destructive)]">
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -111,6 +111,7 @@ function AnagraficaSearch({
         <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-[var(--card)] border border-[var(--border)] rounded-md shadow-lg max-h-48 overflow-y-auto">
           {results.map(r => (
             <button
+              type="button"
               key={r.id}
               onClick={() => { onChange(r); setQ(""); setOpen(false) }}
               className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--secondary)] transition-colors"
@@ -141,7 +142,7 @@ export function PlantEditClient({ plant, compagnie }: PlantEditClientProps) {
   const [gestore, setGestore] = useState<Anagrafica | null>(
     plant.gestore ? { id: plant.gestore.id, ragioneSociale: plant.gestore.ragioneSociale } : null
   )
-  const [clienteManutenzione, setClienteManutenzione] = useState<string>(plant.clienteManutenzione ?? "")
+  const [clienteManutenzione, setClienteManutenzione] = useState<string>(plant.clienteManutenzione ?? "NESSUNO")
 
   // Apparecchiature state
   const [apparecchiature, setApparecchiature] = useState<{ id: string; tipo: string; marca: string | null; modello: string | null; matricola: string | null; posizione: string | null; stato: string }[]>(plant.apparecchiature ?? [])
@@ -186,7 +187,7 @@ export function PlantEditClient({ plant, compagnie }: PlantEditClientProps) {
           dataApertura: data.dataApertura || null,
           proprietarioId: proprietario?.id ?? null,
           gestoreId: gestore?.id ?? null,
-          clienteManutenzione: clienteManutenzione || null,
+          clienteManutenzione: (clienteManutenzione === "NESSUNO" || !clienteManutenzione) ? null : clienteManutenzione,
         }),
       })
       if (res.ok) {
@@ -383,7 +384,7 @@ export function PlantEditClient({ plant, compagnie }: PlantEditClientProps) {
             <Select value={clienteManutenzione} onValueChange={setClienteManutenzione}>
               <SelectTrigger><SelectValue placeholder="Nessuno specificato" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nessuno specificato</SelectItem>
+                <SelectItem value="NESSUNO">Nessuno specificato</SelectItem>
                 <SelectItem value="PROPRIETARIO">Proprietario</SelectItem>
                 <SelectItem value="GESTORE">Gestore</SelectItem>
               </SelectContent>
@@ -391,6 +392,7 @@ export function PlantEditClient({ plant, compagnie }: PlantEditClientProps) {
           </div>
           <div className="flex justify-end">
             <Button
+              type="button"
               onClick={() => saveGenerale()}
               disabled={saving}
             >
