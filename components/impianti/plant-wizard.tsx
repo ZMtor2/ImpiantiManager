@@ -40,6 +40,10 @@ const Step1Schema = z.object({
 })
 type Step1Data = z.infer<typeof Step1Schema>
 
+const portaPreprocess = (v: unknown) =>
+  v === "" || v == null ? null : isNaN(Number(v)) ? null : Number(v)
+const strOrNull = z.preprocess(v => (v === "" ? null : v), z.string().optional().nullable())
+
 const ApparecchiaturaSchema = z.object({
   tipo: z.string().min(1),
   marca: z.string().optional().nullable(),
@@ -48,6 +52,20 @@ const ApparecchiaturaSchema = z.object({
   posizione: z.string().optional().nullable(),
   stato: z.string().default("FUNZIONANTE"),
   note: z.string().optional().nullable(),
+  terminaleBank: z.object({
+    codiceTerminale: strOrNull,
+    bancaCircuito: strOrNull,
+    tipoConnessione: strOrNull,
+    framingMessaggi: z.string().optional().nullable(),
+    indirizzoIp: strOrNull,
+    porta: z.preprocess(portaPreprocess, z.number().int().optional().nullable()),
+  }).optional().nullable(),
+  terminalePetrolio: z.object({
+    codiceTerminale: strOrNull,
+    protocolloComunicazione: strOrNull,
+    indirizzoIp: strOrNull,
+    porta: z.preprocess(portaPreprocess, z.number().int().optional().nullable()),
+  }).optional().nullable(),
 })
 type ApparecchiaturaData = z.infer<typeof ApparecchiaturaSchema>
 
@@ -277,6 +295,7 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
     resolver: zodResolver(ApparecchiaturaSchema) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
     defaultValues: { tipo: "EROGATORE", stato: "FUNZIONANTE" },
   })
+  const eqTipo = eqForm.watch("tipo")
 
   const addApparecchiatura = eqForm.handleSubmit(async (data: ApparecchiaturaData) => {
     if (!plantId) return
@@ -568,6 +587,31 @@ export function PlantWizard({ compagnie }: PlantWizardProps) {
                 <div><Label>Matricola</Label><Input {...eqForm.register("matricola")} className="mt-1" /></div>
                 <div><Label>Posizione</Label><Input {...eqForm.register("posizione")} className="mt-1" placeholder="es. Isola 1 lato A" /></div>
                 <div className="sm:col-span-2"><Label>Note</Label><Input {...eqForm.register("note")} className="mt-1" /></div>
+
+                {eqTipo === "COLONNINA_PAGAMENTO" && (<>
+                  <div className="sm:col-span-2"><Separator /><p className="text-sm font-semibold text-[var(--primary)] pt-1">Terminale Bancario</p></div>
+                  <div><Label>Codice terminale</Label><Input {...eqForm.register("terminaleBank.codiceTerminale" as any)} className="mt-1" placeholder="es. 12345678" /></div>
+                  <div><Label>Banca / Circuito</Label><Input {...eqForm.register("terminaleBank.bancaCircuito" as any)} className="mt-1" placeholder="es. Nexi, CartaSì" /></div>
+                  <div><Label>Tipo connessione</Label><Input {...eqForm.register("terminaleBank.tipoConnessione" as any)} className="mt-1" placeholder="es. TCP/IP, VPN SSL" /></div>
+                  <div>
+                    <Label>Framing messaggi</Label>
+                    <Select onValueChange={v => eqForm.setValue("terminaleBank.framingMessaggi" as any, v || null)}>
+                      <SelectTrigger className="mt-1"><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="BT">BT</SelectItem>
+                        <SelectItem value="TESTATA_IP">Testata IP</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div><Label>Indirizzo IP terminale bancario</Label><Input {...eqForm.register("terminaleBank.indirizzoIp" as any)} className="mt-1 font-mono" placeholder="192.168.1.100" /></div>
+                  <div><Label>Porta terminale bancario</Label><Input type="number" {...eqForm.register("terminaleBank.porta" as any)} className="mt-1" placeholder="es. 8080" /></div>
+
+                  <div className="sm:col-span-2"><Separator /><p className="text-sm font-semibold text-[var(--primary)] pt-1">Terminale Petrolio</p></div>
+                  <div><Label>Codice terminale</Label><Input {...eqForm.register("terminalePetrolio.codiceTerminale" as any)} className="mt-1" placeholder="es. PET001" /></div>
+                  <div><Label>Protocollo comunicazione</Label><Input {...eqForm.register("terminalePetrolio.protocolloComunicazione" as any)} className="mt-1" placeholder="es. IFSF, Tokheim" /></div>
+                  <div><Label>Indirizzo IP terminale petrolio</Label><Input {...eqForm.register("terminalePetrolio.indirizzoIp" as any)} className="mt-1 font-mono" placeholder="192.168.1.101" /></div>
+                  <div><Label>Porta terminale petrolio</Label><Input type="number" {...eqForm.register("terminalePetrolio.porta" as any)} className="mt-1" placeholder="es. 1024" /></div>
+                </>)}
               </div>
               <div className="flex justify-end">
                 <Button type="submit" variant="outline" disabled={addingEq}>
