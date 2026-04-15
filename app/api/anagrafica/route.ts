@@ -69,7 +69,13 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = AnagraficaSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+      const flat = parsed.error.flatten();
+      const firstField = Object.entries(flat.fieldErrors)[0];
+      const msg = firstField
+        ? `${firstField[0]}: ${firstField[1]?.[0]}`
+        : flat.formErrors[0] ?? "Dati non validi";
+      console.error("Validation error:", flat);
+      return NextResponse.json({ error: msg }, { status: 400 });
     }
     const { contatti, ...anaData } = parsed.data;
     const anagrafica = await prisma.anagrafica.create({
@@ -85,6 +91,17 @@ export async function POST(req: Request) {
   } catch (err) {
     if (err instanceof Error && err.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    // Prisma unique constraint violation
+    if (
+      err instanceof Error &&
+      "code" in err &&
+      (err as { code: string }).code === "P2002"
+    ) {
+      return NextResponse.json(
+        { error: "Partita IVA già registrata nel sistema" },
+        { status: 409 }
+      );
     }
     console.error(err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
