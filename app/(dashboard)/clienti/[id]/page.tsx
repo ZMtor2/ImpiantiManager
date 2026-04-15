@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Edit, Phone, Mail } from "lucide-react"
 import { statoImpiantoLabel } from "@/lib/labels"
+import { DeleteClienteButton } from "@/components/clienti/delete-cliente-button"
 
 export default async function ClienteDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -53,9 +54,16 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
             {cliente.partitaIva && <p className="text-sm text-muted-foreground mt-1">P.IVA: {cliente.partitaIva}</p>}
           </div>
           {canWrite && (
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/clienti/${id}/modifica`}><Edit className="h-4 w-4 mr-1" />Modifica</Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/clienti/${id}/modifica`}><Edit className="h-4 w-4 mr-1" />Modifica</Link>
+              </Button>
+              <DeleteClienteButton
+                clienteId={id}
+                ragioneSociale={cliente.ragioneSociale}
+                impiantiCount={(cliente.impiantiProprietario?.length ?? 0) + (cliente.impiantiGestore?.length ?? 0)}
+              />
+            </div>
           )}
         </div>
       </div>
