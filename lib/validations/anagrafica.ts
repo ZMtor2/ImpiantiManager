@@ -3,10 +3,10 @@ import { z } from "zod";
 export const AnagraficaContactSchema = z.object({
   id: z.string().optional(),
   nome: z.string().min(1, "Nome richiesto"),
-  ruolo: z.string().optional(),
-  telefono: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
-  note: z.string().optional(),
+  ruolo: z.string().optional().nullable(),
+  telefono: z.string().optional().nullable(),
+  email: z.string().email().optional().nullable().or(z.literal("")),
+  note: z.string().optional().nullable(),
 });
 
 export const AnagraficaSchema = z.object({
