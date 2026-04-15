@@ -167,6 +167,19 @@ export function PlantEditClient({ plant, compagnie }: PlantEditClientProps) {
   const [addingEq, setAddingEq] = useState(false)
   const [deletingEqId, setDeletingEqId] = useState<string | null>(null)
 
+  // SchedaMacchina state (for GESTIONALE type)
+  const emptyScheda = { indirizzoIpPc: "", usernameSistema: "", passwordSistema: "", passwordPumapro: "", passwordAdmin: "", tipoAccessoRemoto: "", portaAccessoRemoto: "", subnetMask: "", gateway: "", dnsPrimario: "", dnsSecondario: "", tipoRete: "", versioneSoftware: "", numeroLicenza: "", scadenzaLicenza: "" }
+  const [schedaFields, setSchedaFields] = useState(emptyScheda)
+  const [rotte, setRotte] = useState<{ reteDestinazione: string; gateway: string }[]>([])
+  const [newRotta, setNewRotta] = useState({ ip: "", subnetMask: "", gateway: "" })
+  const addRotta = () => {
+    if (!newRotta.ip.trim() || !newRotta.gateway.trim()) return
+    const rete = newRotta.subnetMask.trim() ? `${newRotta.ip.trim()} ${newRotta.subnetMask.trim()}` : newRotta.ip.trim()
+    setRotte(prev => [...prev, { reteDestinazione: rete, gateway: newRotta.gateway.trim() }])
+    setNewRotta({ ip: "", subnetMask: "", gateway: "" })
+  }
+  const resetSchedaState = () => { setSchedaFields(emptyScheda); setRotte([]); setNewRotta({ ip: "", subnetMask: "", gateway: "" }) }
+
   // Rete state
   const [devices, setDevices] = useState<{ id: string; etichetta: string; tipoDispositivo: string; indirizzoIp: string; macAddress: string | null }[]>(plant.networkDevices ?? [])
   const [addingDev, setAddingDev] = useState(false)
@@ -229,15 +242,38 @@ export function PlantEditClient({ plant, compagnie }: PlantEditClientProps) {
   const addApparecchiatura = eqForm.handleSubmit(async (data: ApparecchiaturaData) => {
     setAddingEq(true)
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const bodyData: Record<string, any> = { ...data }
+      if (data.tipo === "GESTIONALE") {
+        bodyData.schedaMacchina = {
+          indirizzoIpPc: schedaFields.indirizzoIpPc || null,
+          usernameSistema: schedaFields.usernameSistema || null,
+          passwordSistema: schedaFields.passwordSistema || null,
+          passwordPumapro: schedaFields.passwordPumapro || null,
+          passwordAdmin: schedaFields.passwordAdmin || null,
+          tipoAccessoRemoto: schedaFields.tipoAccessoRemoto || null,
+          portaAccessoRemoto: schedaFields.portaAccessoRemoto ? parseInt(schedaFields.portaAccessoRemoto, 10) || null : null,
+          subnetMask: schedaFields.subnetMask || null,
+          gateway: schedaFields.gateway || null,
+          dnsPrimario: schedaFields.dnsPrimario || null,
+          dnsSecondario: schedaFields.dnsSecondario || null,
+          tipoRete: schedaFields.tipoRete || null,
+          versioneSoftware: schedaFields.versioneSoftware || null,
+          numeroLicenza: schedaFields.numeroLicenza || null,
+          scadenzaLicenza: schedaFields.scadenzaLicenza || null,
+          rotte: rotte.filter(r => r.reteDestinazione && r.gateway),
+        }
+      }
       const res = await fetch(`/api/impianti/${plant.id}/apparecchiature`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(bodyData),
       })
       if (res.ok) {
         const eq = await res.json()
         setApparecchiature(prev => [...prev, eq])
         eqForm.reset({ tipo: "EROGATORE", stato: "FUNZIONANTE" })
+        resetSchedaState()
         toast.success("Apparecchiatura aggiunta")
       } else {
         toast.error("Errore durante l'aggiunta")
@@ -506,6 +542,49 @@ export function PlantEditClient({ plant, compagnie }: PlantEditClientProps) {
                   <div><Label>Protocollo comunicazione</Label><Input {...eqForm.register("terminalePetrolio.protocolloComunicazione" as any)} className="mt-1" placeholder="es. IFSF, Tokheim" /></div>
                   <div><Label>Indirizzo IP terminale petrolio</Label><Input {...eqForm.register("terminalePetrolio.indirizzoIp" as any)} className="mt-1 font-mono" placeholder="192.168.1.101" /></div>
                   <div><Label>Porta terminale petrolio</Label><Input type="number" {...eqForm.register("terminalePetrolio.porta" as any)} className="mt-1" placeholder="es. 1024" /></div>
+                </>)}
+
+                {eqTipo === "GESTIONALE" && (<>
+                  <div className="sm:col-span-2"><Separator /><p className="text-sm font-semibold text-[var(--primary)] pt-1">Accesso al sistema</p></div>
+                  <div><Label>IP PC</Label><Input value={schedaFields.indirizzoIpPc} onChange={e => setSchedaFields(f => ({...f, indirizzoIpPc: e.target.value}))} className="mt-1 font-mono" placeholder="192.168.1.10" /></div>
+                  <div><Label>Username sistema</Label><Input value={schedaFields.usernameSistema} onChange={e => setSchedaFields(f => ({...f, usernameSistema: e.target.value}))} className="mt-1" /></div>
+                  <div><Label>Password sistema</Label><Input type="password" value={schedaFields.passwordSistema} onChange={e => setSchedaFields(f => ({...f, passwordSistema: e.target.value}))} className="mt-1" /></div>
+                  <div><Label>Password Pumapro</Label><Input type="password" value={schedaFields.passwordPumapro} onChange={e => setSchedaFields(f => ({...f, passwordPumapro: e.target.value}))} className="mt-1" /></div>
+                  <div><Label>Password Admin</Label><Input type="password" value={schedaFields.passwordAdmin} onChange={e => setSchedaFields(f => ({...f, passwordAdmin: e.target.value}))} className="mt-1" /></div>
+                  <div><Label>Tipo accesso remoto</Label><Input value={schedaFields.tipoAccessoRemoto} onChange={e => setSchedaFields(f => ({...f, tipoAccessoRemoto: e.target.value}))} className="mt-1" placeholder="es. TeamViewer, RDP, VNC" /></div>
+                  <div><Label>Porta accesso remoto</Label><Input type="number" value={schedaFields.portaAccessoRemoto} onChange={e => setSchedaFields(f => ({...f, portaAccessoRemoto: e.target.value}))} className="mt-1" /></div>
+
+                  <div className="sm:col-span-2"><Separator /><p className="text-sm font-semibold text-[var(--primary)] pt-1">Configurazione di rete</p></div>
+                  <div><Label>Subnet mask</Label><Input value={schedaFields.subnetMask} onChange={e => setSchedaFields(f => ({...f, subnetMask: e.target.value}))} className="mt-1 font-mono" placeholder="255.255.255.0" /></div>
+                  <div><Label>Gateway</Label><Input value={schedaFields.gateway} onChange={e => setSchedaFields(f => ({...f, gateway: e.target.value}))} className="mt-1 font-mono" placeholder="192.168.1.1" /></div>
+                  <div><Label>DNS primario</Label><Input value={schedaFields.dnsPrimario} onChange={e => setSchedaFields(f => ({...f, dnsPrimario: e.target.value}))} className="mt-1 font-mono" placeholder="8.8.8.8" /></div>
+                  <div><Label>DNS secondario</Label><Input value={schedaFields.dnsSecondario} onChange={e => setSchedaFields(f => ({...f, dnsSecondario: e.target.value}))} className="mt-1 font-mono" placeholder="8.8.4.4" /></div>
+                  <div><Label>Tipo rete</Label><Input value={schedaFields.tipoRete} onChange={e => setSchedaFields(f => ({...f, tipoRete: e.target.value}))} className="mt-1" placeholder="es. ADSL, Fibra, 4G" /></div>
+
+                  <div className="sm:col-span-2"><Separator /><p className="text-sm font-semibold text-[var(--primary)] pt-1">Software</p></div>
+                  <div><Label>Versione software</Label><Input value={schedaFields.versioneSoftware} onChange={e => setSchedaFields(f => ({...f, versioneSoftware: e.target.value}))} className="mt-1" /></div>
+                  <div><Label>Numero licenza</Label><Input value={schedaFields.numeroLicenza} onChange={e => setSchedaFields(f => ({...f, numeroLicenza: e.target.value}))} className="mt-1" /></div>
+                  <div><Label>Scadenza licenza</Label><Input type="date" value={schedaFields.scadenzaLicenza} onChange={e => setSchedaFields(f => ({...f, scadenzaLicenza: e.target.value}))} className="mt-1" /></div>
+
+                  <div className="sm:col-span-2"><Separator /><p className="text-sm font-semibold text-[var(--primary)] pt-1">Rotte statiche</p></div>
+                  {rotte.length > 0 && (
+                    <div className="sm:col-span-2 space-y-1">
+                      {rotte.map((r, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs font-mono bg-muted/30 rounded px-3 py-1.5">
+                          <span className="flex-1">{r.reteDestinazione} → {r.gateway}</span>
+                          <button type="button" onClick={() => setRotte(prev => prev.filter((_, j) => j !== i))} className="text-destructive hover:text-destructive/80"><Trash2 className="h-3.5 w-3.5" /></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div><Label>IP destinazione</Label><Input value={newRotta.ip} onChange={e => setNewRotta(r => ({...r, ip: e.target.value}))} className="mt-1 font-mono" placeholder="192.168.10.0" /></div>
+                  <div><Label>Subnet mask</Label><Input value={newRotta.subnetMask} onChange={e => setNewRotta(r => ({...r, subnetMask: e.target.value}))} className="mt-1 font-mono" placeholder="255.255.255.0" /></div>
+                  <div><Label>Gateway</Label><Input value={newRotta.gateway} onChange={e => setNewRotta(r => ({...r, gateway: e.target.value}))} className="mt-1 font-mono" placeholder="192.168.1.1" /></div>
+                  <div className="flex items-end">
+                    <Button type="button" variant="outline" size="sm" onClick={addRotta} className="mt-1 w-full">
+                      <Plus className="h-3.5 w-3.5 mr-1" />Aggiungi rotta
+                    </Button>
+                  </div>
                 </>)}
               </div>
               <div className="flex justify-end">
